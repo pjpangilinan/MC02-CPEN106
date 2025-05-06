@@ -191,7 +191,7 @@ with tab1:
 
         st.image("mmber.jpg")
 
-        st.markdown("""<p><strong>Group Members, from left to right:</strong></p>
+        st.markdown("""<p><strong>Group Members (from left to right):</strong></p>
             <ul>
                 <li>Papa, Mark Jamir C.</li>
                 <li>Vidad, Ranjo B.</li>
@@ -215,7 +215,7 @@ with tab2:
 
         # Full width for line charts
         st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1200px; justify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Line Charts for Time-Series Data</h3>
             </div>
         """, unsafe_allow_html=True)
