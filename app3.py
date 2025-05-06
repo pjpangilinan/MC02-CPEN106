@@ -674,4 +674,4 @@ with tab5:
         <strong>Use Latest Predictive Models like Transformer or AutoML</strong> –  Include advanced models to enhance sequential learning and automate model optimization.
       </li>
     </ul>
-    """, unsafe_html=True)
+    """, unsafe_allow_html=True)
