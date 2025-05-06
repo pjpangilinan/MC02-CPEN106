@@ -10,8 +10,80 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.impute import KNNImputer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
+from PIL import Image
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
+
+st.image("lawatch.png", use_container_width=True)
+
+st.markdown(f"""
+<style>
+.stTabs [data-baseweb="tab-panel"] h2 {{
+    color: #003366;
+    font-size: 26px;
+    font-weight: bold; /* Make text bold */
+    margin-top: 0px;
+    margin-bottom: 20px; /* Increase space below the header */
+    font-family: 'Arial', sans-serif; /* Clean and modern font */
+    letter-spacing: 1px; /* Slight letter spacing */
+    text-transform: uppercase; /* Capitalize for emphasis */
+}}
+
+/* Style for tabs on hover */
+.stTabs [data-baseweb="tab"]:hover {{
+    background-color: #126f39;
+    color: #FFFFFF; /* Change text to white for better contrast */
+    font-weight: bold; /* Bold text on hover */
+    font-family: 'Arial', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Subtle shadow for better text contrast */
+}}
+
+/* Style for the tab list container */
+.stTabs [data-baseweb="tab-list"] {{
+    gap: 30px; /* Increase space between tabs */
+    justify-content: center; /* Center the tabs */
+}}
+
+/* Style for individual tab headers */
+.stTabs [data-baseweb="tab"] {{
+    height: 50px; /* Increase height for tabs */
+    white-space: pre-wrap; /* Allow wrapping if text is long */
+    border-radius: 6px 6px 0px 0px; /* Rounded top corners */
+    padding: 10px 20px; /* Add padding inside each tab */
+    font-weight: bold; /* Make tab text bold */
+    font-family: 'Arial', sans-serif; /* Clean and modern font */
+    text-align: center; /* Center align the text */
+    letter-spacing: 1px; /* Slight letter spacing */
+    text-transform: uppercase; /* Capitalize text */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Subtle text shadow */
+    transition: all 0.3s ease; /* Smooth transition effect */
+}}
+
+/* Style for the button inside the tab list */
+.stTabs [data-baseweb="tab-list"] button {{
+    padding: 15px 30px; /* Adjust padding for a more spacious look */
+}}
+
+/* Highlight style for the selected tab */
+.stTabs [data-baseweb="tab-highlight"] {{
+    background-color: green;
+    height: 4px; /* Slightly thicker highlight */
+    border-radius: 2px; /* Rounded corners for the highlight */
+    color: dark-green;
+}}
+
+/* Style for selected tab */
+.stTabs [aria-selected="true"] {{
+    background-color: #5cc37f; /* Darker blue for selected tab */
+    color: #FFFFFF !important; /* White text when selected */
+    font-weight: bold; /* Bold text for selected tab */
+    height: 55px; /* Slightly taller for emphasis */
+}}
+</style>
+""", unsafe_allow_html=True) # Render the CSS
+
 
 # Load data
 df = pd.read_csv("Spreadmeat_WQxVAxMF.csv")
@@ -58,56 +130,202 @@ df_new[numeric_cols] = scaler.fit_transform(df_new[numeric_cols])
 df_scaled = df_new.copy()
 
 # Main UI
-tabs = st.selectbox("Select a Tab", ["Exploratory Data Analysis (EDA)", "Water Quality Prediction & Model Comparison", "Time-Based Prediction & WQI Calculation"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Introduction",
+    "Exploratory Data Analysis", 
+    "Water Quality Prediction & Model Comparison", 
+    "Time-Based Prediction & WQI Calculation"
+])
 
-if tabs == "Exploratory Data Analysis (EDA)":
-    st.header("Exploratory Data Analysis (EDA) of the Processed Dataset")
+with tab1:
+    col1, col2 = st.columns([1.5, 1.2])
 
-    st.subheader("Dataset Overview")
-    st.write(df_eda.head())
+    # -------- LEFT COLUMN: INTRODUCTION --------
+    with col1:
+        st.markdown("<h3 style='border-radius: 10px; margin-top: -10px; background-color: green; color: white; padding: 20px;'>Data Mining and Data Visualization for Water Quality Prediction in Taal Lake</h3>", unsafe_allow_html=True)
 
-    st.subheader("Summary Statistics")
-    st.write(df_eda.describe())
+        st.markdown("<h3>🎯 Objectives</h3>", unsafe_allow_html=True)
+        st.markdown("""
+        <p style='text-align: justify;'>This laboratory aims to apply data mining techniques to extract actionable insights from environmental datasets. 
+        It focuses on developing predictive models for water quality in Taal Lake using machine learning, 
+        particularly ensemble learning methods such as CNN, LSTM, and Hybrid CNN-LSTM.</p>
 
-    st.subheader("Correlation Heatmap")
-    df_filtered = df_eda.select_dtypes(include=np.number)
-    correlation_matrix = df_filtered.corr()
-    fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
-    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax_corr)
-    st.pyplot(fig_corr)
+        <ul>
+        <li>Apply data mining techniques to extract useful insights from environmental datasets.</li>
+        <li>Develop predictive models for water quality using machine learning.</li>
+        <li>Compare ensemble learning techniques such as CNN, LSTM, and Hybrid CNN-LSTM.</li>
+        <li>Visualize trends and patterns in water quality parameters.</li>
+        <li>Interpret the impact of environmental and volcanic activity on water quality.</li>
+        <li>Predict Water Quality Index (WQI) and Water Pollutant Levels with actionable insights for environmental monitoring and intervention.</li>
+        </ul>
+        """, unsafe_allow_html=True)
 
-    st.subheader("Line Charts for Time-Series Data")
-    df_plot = df_eda.copy()
-    df_plot.set_index('Date', inplace=True)
+        st.markdown("<h3>🛠️ Materials & Tools</h3>", unsafe_allow_html=True)
 
-    colors = ['blue', 'green', 'red', 'purple', 'orange', 'cyan', 'magenta', 'brown', 'yellow', 'gray']
-    num_plots = len(df_plot.select_dtypes(include=np.number).columns)
-    rows = (num_plots + 1) // 2
-    fig, axes = plt.subplots(rows, 2, figsize=(14, 6 * rows))
-    axes = axes.flatten()
+        st.markdown("""
+        <p style='text-align: justify;'>The analysis was conducted using Python in Google Colab.
+        Essential libraries include Pandas and NumPy for data processing, Matplotlib and Seaborn for visualization,
+        Scikit-learn for traditional machine learning, TensorFlow/Keras for deep learning models,
+        and Streamlit for building an interactive dashboard.</p>
+        """, unsafe_allow_html=True)
 
-    for i, column in enumerate(df_plot.select_dtypes(include=np.number).columns):
-        ax = axes[i]
-        color = random.choice(colors)
-        ax.plot(df_plot.index, df_plot[column], color=color)
+        st.markdown("""
+        <p style='text-align: justify;'>The dataset used in this study consists of Taal Lake water quality reports from 2013 to 2023, 
+        provided by the Bureau of Fisheries and Aquatic Resources (BFAR). It includes both environmental 
+        and volcanic activity indicators.</p>
+        <ul>
+            <li><p><em>Weather Factors:</em> Weather condition, wind direction, and air temperature.<br></li>
+            <li><em>Water Quality Parameters:</em> Surface, middle, and bottom water temperatures, pH, dissolved oxygen, 
+        nitrogen (as nitrite or nitrate), ammonia, and phosphate.<br></li>
+            <li><em>Volcanic Activity Indicators:</em> Sulfide and carbon dioxide concentrations.</p></li>
+        </ul>""", unsafe_allow_html=True)
+
+    with col2:
+        #lake = Image.open("streamme\lake.jpg")
+        st.image("lake.jpg")
+
+        st.markdown(
+            "<p style='text-align: center; color: lightgray; font-size: 16px;'>Taal Lake <br> https://shoestringdiary.wordpress.com/2024/08/14/golden-hour-to-sunset-at-taal-lake/</p>",
+            unsafe_allow_html=True
+        )
+
+        st.image("mmber.jpg")
+
+        st.markdown("""<p><strong>Group Members, from left to right:</strong></p>
+            <ul>
+                <li>Papa, Mark Jamir C.</li>
+                <li>Vidad, Ranjo B.</li>
+                <li>Mojica, Warreon Dave A.</li>
+                <li>Dizon, Rockwell E.</li>
+                <li>Pangilinan, Patrick James A.</li>
+                <li>Lineses, Dann B.</li>
+            </ul>
+        """, unsafe_allow_html=True)
+
+
+with tab2:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Dataset Overview")
+        st.write(df_eda.head())
+
+        st.subheader("Summary Statistics")
+        st.write(df_eda.describe())
+
+        # Full width for line charts
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Line Charts for Time-Series Data</h3>
+            </div>
+        """, unsafe_allow_html=True)
+        df_plot = df_eda.copy()
+        df_plot.set_index('Date', inplace=True)
+
+        numeric_columns = df_plot.select_dtypes(include=np.number).columns.tolist()
+
+        # Streamlit dropdown for parameter selection
+        selected_param = st.selectbox("Select Parameter to Plot:", numeric_columns)
+
+        # Plotting
+        fig, ax = plt.subplots(figsize=(14, 6))
+        color = random.choice(['blue', 'green', 'red', 'purple', 'orange', 'cyan', 'magenta', 'brown', 'gray'])
+        ax.plot(df_plot.index, df_plot[selected_param], color=color)
         ax.set_xlabel("Date")
-        ax.set_ylabel(column)
-        ax.set_title(f"Time Series Plot of {column}")
+        ax.set_ylabel(selected_param)
+        ax.set_title(f"Time Series Plot of {selected_param}")
         ax.set_xticks(pd.to_datetime([f"{year}-01-01" for year in range(2013, 2025, 2)]))
         ax.set_xticklabels([str(year) for year in range(2013, 2025, 2)], rotation=45)
         ax.grid(True)
 
-    for j in range(i + 1, len(axes)):
-        fig.delaxes(axes[j])  # Remove unused subplots
+        # Show plot in Streamlit
+        st.pyplot(fig)
+    with col2:
+        st.subheader("Correlation Heatmap")
+        df_filtered = df_eda.select_dtypes(include=np.number)
+        correlation_matrix = df_filtered.corr()
+        fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
+        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax_corr)
+        st.pyplot(fig_corr)
 
-    plt.tight_layout()
-    st.pyplot(fig)
+        with st.expander("📘 Correlation Analysis Summary", expanded=False):
+            st.markdown("""
+            <ul>
+            <li>The analysis shows that most parameters have low negative correlations, while a few show strong relationships.</li>
+            <li><strong>Water Temperatures</strong> strongly correlate with <strong>Air Temperature</strong>, indicating the impact of atmospheric conditions, especially on surface waters.</li>
+            <li><strong>Ammonia</strong> and <strong>Phosphate</strong> levels rise together, likely due to pollution or biological processes.</li>
+            <li><strong>pH</strong>, <strong>Dissolved Oxygen</strong>, <strong>Phosphate</strong>, and <strong>CO₂</strong> show declining trends over time, possibly linked to acidification, warming, or reduced biological activity.</li>
+            <li>Moderate correlations also exist between:
+                <ul>
+                <li><strong>pH</strong> & <strong>Dissolved Oxygen</strong></li>
+                <li><strong>Sulfide</strong> & <strong>Ammonia</strong></li>
+                <li><strong>CO₂</strong> & <strong>Water Temperatures</strong> / <strong>Dissolved Oxygen</strong></li>
+                </ul>
+            </li>
+            </ul>
+            """, unsafe_allow_html=True)
 
-elif tabs == "Water Quality Prediction & Model Comparison":
-    st.header("Water Quality Prediction & Model Comparison Dashboard for Taal Lake")
+       
+        # Ensure 'Weather Condition' is categorical and ordered
+        df_eda['Weather Condition'] = df_eda['Weather Condition'].astype(str)
+        sorted_conditions = sorted(df_eda['Weather Condition'].unique())
+        df_eda['Weather Condition'] = pd.Categorical(df_new['Weather Condition'], categories=sorted_conditions, ordered=True)
 
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Scatter Plots for Parameter Relationships</h3>
+            </div>
+        """, unsafe_allow_html=True)
+        # Define all pairings to be plotted
+        scatter_options = {
+            # Weather Condition related
+            "Weather Condition vs pH": ("Weather Condition", "pH"),
+            "Weather Condition vs Dissolved Oxygen": ("Weather Condition", "Dissolved Oxygen"),
+            "Weather Condition vs Nitrate": ("Weather Condition", "Nitrate"),
+            "Weather Condition vs Nitrite": ("Weather Condition", "Nitrite"),
+            "Weather Condition vs Ammonia": ("Weather Condition", "Ammonia"),
+            "Weather Condition vs Phosphate": ("Weather Condition", "Phosphate"),
+
+            # Wind Direction related
+            "Wind Direction vs Ammonia": ("Wind Direction", "Ammonia"),
+            "Wind Direction vs Nitrate": ("Wind Direction", "Nitrate"),
+            "Wind Direction vs Phosphate": ("Wind Direction", "Phosphate"),
+            "Wind Direction vs Nitrite": ("Wind Direction", "Nitrite"),
+            "Wind Direction vs Dissolved Oxygen": ("Wind Direction", "Dissolved Oxygen")
+        }
+
+        # Streamlit dropdown
+        selected_plot = st.selectbox("Select parameter pair to visualize:", list(scatter_options.keys()))
+        x_param, y_param = scatter_options[selected_plot]
+
+        # Plotting
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Use seaborn only for Weather Condition (categorical x-axis)
+        if x_param == "Weather Condition":
+            sns.scatterplot(x=x_param, y=y_param, data=df_new, ax=ax)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+        else:
+            ax.scatter(df_new[x_param], df_new[y_param], alpha=0.7, label=f"{x_param} vs {y_param}")
+            ax.legend()
+
+        ax.set_xlabel(x_param)
+        ax.set_ylabel(y_param)
+        ax.set_title(f"{x_param} vs {y_param}")
+        ax.grid(True)
+        st.pyplot(fig)
+
+with tab3:
+    st.markdown(
+        """
+        <div style='background-color: green; padding: 10px; border-radius: 10px;'>
+            <h1 style='font-size: 2.3rem; color: white; text-align: center;'>Water Quality Prediction & Model Comparison Dashboard for Taal Lake</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     # Sidebar Filters
-    st.sidebar.header("Selection Filters")
+    st.sidebar.header("Selection Filters for Water Quality Prediction")
     selected_site = st.sidebar.selectbox("Select Site", sites)
 
     date_range = st.sidebar.select_slider(
@@ -191,14 +409,19 @@ elif tabs == "Water Quality Prediction & Model Comparison":
         st.pyplot(plt)
 
     def train_and_evaluate(model_type, X_train, X_valid, X_test, y_train, y_valid, y_test, selected_param):
-        st.write(f"## {model_type} Model - Predicting {selected_param}")
+        st.markdown(f"""
+            <div style="background-color: green; border-radius: 10px; color: white; text-align: center; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px;">
+                <h1 style="color: white; padding: 0; margin: 0;">{model_type} Model</h1>
+                <h3 style="color: white; padding: 0; margin: 0;">Predicting {selected_param}</h3>
+            </div>
+        """, unsafe_allow_html=True)
         model = build_model(model_type, (X_train.shape[1], 1))
         model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_valid, y_valid), verbose=0)
         y_pred = model.predict(X_test)
         mae = mean_absolute_error(y_test, y_pred)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-        st.subheader("Model Evaluation")
+        st.subheader("🔎 Model Evaluation")
         st.write(f"**MAE:** {mae:.3f}")
         st.write(f"**RMSE:** {rmse:.3f}")
 
@@ -214,11 +437,16 @@ elif tabs == "Water Quality Prediction & Model Comparison":
 
         return model
 
-    train_and_evaluate("CNN", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
-    train_and_evaluate("LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
-    train_and_evaluate("CNN-LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+    col1, col2, col3 = st.columns(3)
 
-elif tabs == "Time-Based Prediction & WQI Calculation":
+    with col1:
+        train_and_evaluate("CNN", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+    with col2:
+        train_and_evaluate("LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+    with col3:
+        train_and_evaluate("CNN-LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+
+with tab4:
     df_unstandardize = df.copy()
 
     def build_model(model_type, input_shape, output_dim):
@@ -282,12 +510,23 @@ elif tabs == "Time-Based Prediction & WQI Calculation":
             
         return np.array(X), np.array(Y), len(X), yearly_data
 
-    st.header("Time-Based Prediction")
+    st.markdown(
+        """
+        <div style='background-color: green; padding: 10px; border-radius: 10px;'>
+            <h1 style='font-size: 2.3rem; color: white; text-align: center;'>⏳ Time-Based Prediction</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
+    col1, col2, col3 = st.columns(3)
     # UI Inputs
-    prediction_type = st.radio("Select Time Granularity", ["Monthly", "Yearly"])
-    selected_model = st.selectbox("Choose Model", ["CNN", "LSTM", "CNN-LSTM"])
-    location = st.selectbox("Select Site", df_new['Site'].unique())
+    with col1:
+        prediction_type = st.radio("Select Time Granularity", ["Monthly", "Yearly"])
+    with col2:
+        selected_model = st.selectbox("Choose Model", ["CNN", "LSTM", "CNN-LSTM"])
+    with col3:
+        location = st.selectbox("Select Site", df_new['Site'].unique())
 
     target_vars = ['Surface Temp', 'Middle Temp', 'Bottom Temp', 'pH',
                    'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia', 'Phosphate']
@@ -328,7 +567,11 @@ elif tabs == "Time-Based Prediction & WQI Calculation":
                                    columns=target_vars)
 
         # Display predictions
-        st.subheader("Predictions (Original Units)")
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Predictions (Original Units)</h3>
+            </div>
+        """, unsafe_allow_html=True)
         st.dataframe(descaled_df.style.format("{:.2f}"))
 
         st.subheader("Model Performance (on Last Known Data)")
@@ -408,4 +651,3 @@ elif tabs == "Time-Based Prediction & WQI Calculation":
 
         # Display the formatted dataframe
         st.dataframe(formatted_df)
-
