@@ -130,11 +130,12 @@ df_new[numeric_cols] = scaler.fit_transform(df_new[numeric_cols])
 df_scaled = df_new.copy()
 
 # Main UI
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Introduction",
     "Exploratory Data Analysis", 
-    "Water Quality Prediction & Model Comparison", 
-    "Time-Based Prediction & WQI Calculation"
+    "Prediction & Model Comparison", 
+    "Prediction & WQI Calculation"
+    "Recommendations"
 ])
 
 with tab1:
@@ -651,3 +652,25 @@ with tab4:
 
         # Display the formatted dataframe
         st.dataframe(formatted_df)
+
+with tab5:
+    st.subheader("Recommendations")
+
+    st.markdown("""<ul>
+      <li>
+        <strong>Getting more data from PHILVOCS and PAGASA</strong> – Improve the dataset with environmental and meteorological data to improve prediction accuracy.
+      </li>
+      <li>
+        <strong>Daily Water Quality Prediction</strong> – Have daily prediction for each parameter, for each location.
+      </li>
+      <li>
+        <strong>Adding the Year 2024</strong> – Incorporate the most recent data for continuity and better trend analysis.
+      </li>
+      <li>
+        <strong>Tweaking the Parameters of Machine Learning</strong> – Fine-tune hyperparameters to boost model performance and reduce prediction errors.
+      </li>
+      <li>
+        <strong>Use Latest Predictive Models like Transformer or AutoML</strong> –  Include advanced models to enhance sequential learning and automate model optimization.
+      </li>
+    </ul>
+    """, unsafe_html=True)
