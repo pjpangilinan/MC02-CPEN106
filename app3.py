@@ -138,6 +138,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Recommendations"
 ])
 
+
 with tab1:
     col1, col2 = st.columns([1.5, 1.2])
 
@@ -192,7 +193,7 @@ with tab1:
 
         st.image("mmber.jpg")
 
-        st.markdown("""<p><strong>Group Members (from left to right):</strong></p>
+        st.markdown("""<p><strong>Group Members, from left to right:</strong></p>
             <ul>
                 <li>Papa, Mark Jamir C.</li>
                 <li>Vidad, Ranjo B.</li>
@@ -569,7 +570,7 @@ with tab4:
 
         # Display predictions
         st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Predictions (Original Units)</h3>
             </div>
         """, unsafe_allow_html=True)
