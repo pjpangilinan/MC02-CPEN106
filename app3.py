@@ -657,21 +657,25 @@ with tab4:
 with tab5:
     st.subheader("Recommendations")
 
-    st.markdown("""<ul>
-      <li>
-        <strong>Getting more data from PHILVOCS and PAGASA</strong> – Improve the dataset with environmental and meteorological data to improve prediction accuracy.
-      </li>
-      <li>
-        <strong>Daily Water Quality Prediction</strong> – Have daily prediction for each parameter, for each location.
-      </li>
-      <li>
-        <strong>Adding the Year 2024</strong> – Incorporate the most recent data for continuity and better trend analysis.
-      </li>
-      <li>
-        <strong>Tweaking the Parameters of Machine Learning</strong> – Fine-tune hyperparameters to boost model performance and reduce prediction errors.
-      </li>
-      <li>
-        <strong>Use Latest Predictive Models like Transformer or AutoML</strong> –  Include advanced models to enhance sequential learning and automate model optimization.
-      </li>
-    </ul>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        """
+        <ul>
+          <li>
+            <strong>Getting more data from PHILVOCS and PAGASA</strong> – Improve the dataset with environmental and meteorological data to improve prediction accuracy.
+          </li>
+          <li>
+            <strong>Daily Water Quality Prediction</strong> – Have daily prediction for each parameter, for each location.
+          </li>
+          <li>
+            <strong>Adding the Year 2024</strong> – Incorporate the most recent data for continuity and better trend analysis.
+          </li>
+          <li>
+            <strong>Tweaking the Parameters of Machine Learning</strong> – Fine-tune hyperparameters to boost model performance and reduce prediction errors.
+          </li>
+          <li>
+            <strong>Use Latest Predictive Models like Transformer or AutoML</strong> – Include advanced models to enhance sequential learning and automate model optimization.
+          </li>
+        </ul>
+        """,
+        unsafe_allow_html=True
+    )
