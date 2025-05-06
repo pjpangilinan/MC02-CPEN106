@@ -134,7 +134,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Introduction",
     "Exploratory Data Analysis", 
     "Prediction & Model Comparison", 
-    "Prediction & WQI Calculation"
+    "Prediction & WQI Calculation",
     "Recommendations"
 ])
 
