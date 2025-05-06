@@ -215,7 +215,7 @@ with tab2:
 
         # Full width for line charts
         st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1200px; justify-content: center; border-radius: 8px; text-align: center;">
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Line Charts for Time-Series Data</h3>
             </div>
         """, unsafe_allow_html=True)
@@ -568,7 +568,7 @@ with tab4:
 
         # Display predictions
         st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1200px; justify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Predictions (Original Units)</h3>
             </div>
         """, unsafe_allow_html=True)
