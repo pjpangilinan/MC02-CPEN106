@@ -550,7 +550,7 @@ with tab4:
 
         # Build and train model
         model = build_model(selected_model, input_shape=(look_back, num_features), output_dim=len(target_vars))
-        model.fit(X, Y, epochs=100, batch_size=32, verbose=0)
+        model.fit(X, Y, epochs=20, batch_size=32, verbose=0)
 
         # Prediction loop
         last_data = data_used[target_vars].values[-look_back:]
