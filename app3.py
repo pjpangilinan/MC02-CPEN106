@@ -10,7 +10,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.impute import KNNImputer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
-from PIL import Image
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
 
@@ -183,7 +182,6 @@ with tab1:
         </ul>""", unsafe_allow_html=True)
 
     with col2:
-        #lake = Image.open("streamme\lake.jpg")
         st.image("lake.jpg")
 
         st.markdown(
@@ -267,54 +265,37 @@ with tab2:
             </ul>
             """, unsafe_allow_html=True)
 
-       
-        # Ensure 'Weather Condition' is categorical and ordered
         df_eda['Weather Condition'] = df_eda['Weather Condition'].astype(str)
         sorted_conditions = sorted(df_eda['Weather Condition'].unique())
-        df_eda['Weather Condition'] = pd.Categorical(df_new['Weather Condition'], categories=sorted_conditions, ordered=True)
+        df_eda['Weather Condition'] = pd.Categorical(df_eda['Weather Condition'], categories=sorted_conditions, ordered=True)
 
+        # Streamlit header
         st.markdown("""
             <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Scatter Plots for Parameter Relationships</h3>
             </div>
         """, unsafe_allow_html=True)
-        # Define all pairings to be plotted
-        scatter_options = {
-            # Weather Condition related
-            "Weather Condition vs pH": ("Weather Condition", "pH"),
-            "Weather Condition vs Dissolved Oxygen": ("Weather Condition", "Dissolved Oxygen"),
-            "Weather Condition vs Nitrate": ("Weather Condition", "Nitrate"),
-            "Weather Condition vs Nitrite": ("Weather Condition", "Nitrite"),
-            "Weather Condition vs Ammonia": ("Weather Condition", "Ammonia"),
-            "Weather Condition vs Phosphate": ("Weather Condition", "Phosphate"),
 
-            # Wind Direction related
-            "Wind Direction vs Ammonia": ("Wind Direction", "Ammonia"),
-            "Wind Direction vs Nitrate": ("Wind Direction", "Nitrate"),
-            "Wind Direction vs Phosphate": ("Wind Direction", "Phosphate"),
-            "Wind Direction vs Nitrite": ("Wind Direction", "Nitrite"),
-            "Wind Direction vs Dissolved Oxygen": ("Wind Direction", "Dissolved Oxygen")
-        }
+        numeric_columns = df_new.select_dtypes(include=['float64', 'int64']).columns.tolist()
+        categorical_columns = ['Weather Condition', 'Wind Direction']
 
-        # Streamlit dropdown
-        selected_plot = st.selectbox("Select parameter pair to visualize:", list(scatter_options.keys()))
-        x_param, y_param = scatter_options[selected_plot]
+        x_axis = st.selectbox("Select X-axis parameter", categorical_columns + numeric_columns)
+        y_axis = st.selectbox("Select Y-axis parameter", numeric_columns)
 
-        # Plotting
         fig, ax = plt.subplots(figsize=(10, 6))
 
-        # Use seaborn only for Weather Condition (categorical x-axis)
-        if x_param == "Weather Condition":
-            sns.scatterplot(x=x_param, y=y_param, data=df_new, ax=ax)
+        if x_axis in categorical_columns:
+            sns.scatterplot(data=df_new, x=x_axis, y=y_axis, ax=ax)
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
         else:
-            ax.scatter(df_new[x_param], df_new[y_param], alpha=0.7, label=f"{x_param} vs {y_param}")
-            ax.legend()
+            ax.scatter(df_new[x_axis], df_new[y_axis], alpha=0.7)
+            ax.set_xlabel(x_axis)
 
-        ax.set_xlabel(x_param)
-        ax.set_ylabel(y_param)
-        ax.set_title(f"{x_param} vs {y_param}")
+        ax.set_ylabel(y_axis)
+        ax.set_title(f"{x_axis} vs {y_axis}")
         ax.grid(True)
+
+        # Display plot
         st.pyplot(fig)
 
 with tab3:
