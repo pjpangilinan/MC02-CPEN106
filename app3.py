@@ -298,7 +298,6 @@ with tab2:
         # Display plot
         st.pyplot(fig)
 
-with tab3:
     st.markdown(
         """
         <div style='background-color: green; padding: 10px; border-radius: 10px;'>
@@ -307,22 +306,25 @@ with tab3:
         """,
         unsafe_allow_html=True
     )
-    # Sidebar Filters
-    st.sidebar.header("Selection Filters for Water Quality Prediction")
-    selected_site = st.sidebar.selectbox("Select Site", sites)
 
-    date_range = st.sidebar.select_slider(
-        "Select Date Range",
-        options=pd.date_range(start="2013-01-01", end="2023-12-01", freq="MS").strftime('%Y-%m').tolist(),
-        value=("2013-01", "2023-12")
-    )
+    with st.container():
+        st.markdown("### 🔎 Selection Filters for Water Quality Prediction")
+        col1, col2 = st.columns(2)
 
-    # Convert date range to datetime
+        with col1:
+            selected_site = st.selectbox("Select Site", sites)
+            selected_features = st.selectbox("Select Feature Set", feature_options)
+
+        with col2:
+            selected_parameter = st.selectbox("Select Water Parameter to Predict", water_parameters)
+            date_range = st.select_slider(
+                "Select Date Range",
+                options=pd.date_range(start="2013-01-01", end="2023-12-01", freq="MS").strftime('%Y-%m').tolist(),
+                value=("2013-01", "2023-12")
+            )
+
     start_date = pd.to_datetime(date_range[0])
     end_date = pd.to_datetime(date_range[1])
-
-    selected_features = st.sidebar.selectbox("Select Feature Set", feature_options)
-    selected_parameter = st.sidebar.selectbox("Select Water Parameter to Predict", water_parameters)
 
     with st.expander("Selected Options", expanded=True):
         st.markdown(f"""
@@ -334,18 +336,15 @@ with tab3:
 
     df_filtered = df_scaled.copy()
 
-    # Apply site filter
     if selected_site != "All Sites":
         df_filtered = df_filtered[df_filtered["Site"] == selected_site]
 
-    # Apply date filter
     df_filtered = df_filtered[(df_filtered["Date"] >= start_date) & (df_filtered["Date"] <= end_date)]
 
     if df_filtered.shape[0] < 10:
         st.error("Not enough data for the selected filters. Please choose another site or expand the date range.")
         st.stop()
 
-    # Feature processing
     if selected_features == "Water Parameters Only":
         X = df_filtered[water_parameters]
     else:
@@ -360,11 +359,9 @@ with tab3:
     y = df_filtered[selected_parameter]
     X = np.array(X).reshape(X.shape[0], X.shape[1], 1)
 
-    # Train-valid-test split
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=42)
     X_valid, X_test, y_valid, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
-    # Model builder
     def build_model(model_type, input_shape):
         model = Sequential()
         if model_type == "CNN":
@@ -391,43 +388,64 @@ with tab3:
         plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
         st.pyplot(plt)
 
+    predictions_df = pd.DataFrame()
+
     def train_and_evaluate(model_type, X_train, X_valid, X_test, y_train, y_valid, y_test, selected_param):
         st.markdown(f"""
-            <div style="background-color: green; border-radius: 10px; color: white; text-align: center; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px;">
-                <h1 style="color: white; padding: 0; margin: 0;">{model_type} Model</h1>
-                <h3 style="color: white; padding: 0; margin: 0;">Predicting {selected_param}</h3>
+            <div style="background-color: green; border-radius: 10px; color: white; text-align: center; width: 100%; padding: 10px;">
+                <h1 style="color: white;">{model_type} Model</h1>
+                <h3 style="color: white;">Predicting {selected_param}</h3>
             </div>
         """, unsafe_allow_html=True)
         model = build_model(model_type, (X_train.shape[1], 1))
         model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_valid, y_valid), verbose=0)
-        y_pred = model.predict(X_test)
+        y_pred = model.predict(X_test).flatten()
         mae = mean_absolute_error(y_test, y_pred)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-        st.subheader("🔎 Model Evaluation")
+        st.subheader("🔍 Model Evaluation")
         st.write(f"**MAE:** {mae:.3f}")
         st.write(f"**RMSE:** {rmse:.3f}")
 
-        y_pred_flattened = y_pred.flatten()
-        st.subheader("Sample Predictions")
-        pred_df = pd.DataFrame({
+        sample_preds = pd.DataFrame({
             "Actual": y_test.values[:10],
-            "Predicted": y_pred.flatten()[:10]
+            "Predicted": y_pred[:10]
         })
-        st.write(pred_df)
 
-        plot_actual_vs_predicted(y_test, y_pred_flattened, f'{model_type} Model')
+        st.subheader("Sample Predictions")
+        st.write(sample_preds)
 
-        return model
+        plot_actual_vs_predicted(y_test, y_pred, f'{model_type} Model')
 
-    col1, col2, col3 = st.columns(3)
+        return y_pred
 
-    with col1:
-        train_and_evaluate("CNN", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
-    with col2:
-        train_and_evaluate("LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
-    with col3:
-        train_and_evaluate("CNN-LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+    st.markdown("""
+        <style>
+            div.stButton > button:first-child {
+                background-color: green;
+                color: white;
+                width: 100%;
+                padding: 10px;
+                font-size: 16px;
+                font-weight: bold;
+                border-radius: 8px;
+            }
+            div.stButton > button:first-child:hover {
+                background-color: darkgreen;
+                color: white;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    if st.button("Start Prediction"):
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            train_and_evaluate("CNN", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+        with col2:
+            train_and_evaluate("LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+        with col3:
+            train_and_evaluate("CNN-LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
 
 with tab4:
     df_unstandardize = df.copy()
@@ -531,7 +549,7 @@ with tab4:
 
         # Build and train model
         model = build_model(selected_model, input_shape=(look_back, num_features), output_dim=len(target_vars))
-        model.fit(X, Y, epochs=20, batch_size=32, verbose=0)
+        model.fit(X, Y, epochs=100, batch_size=32, verbose=0)
 
         # Prediction loop
         last_data = data_used[target_vars].values[-look_back:]
@@ -549,33 +567,39 @@ with tab4:
         descaled_df = pd.DataFrame(scaler.inverse_transform(predictions_df),
                                    columns=target_vars)
 
-        # Display predictions
-        st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1400px; justify-content: center; border-radius: 8px; text-align: center;">
-                <h3 style="margin: 0;">Predictions (Original Units)</h3>
-            </div>
-        """, unsafe_allow_html=True)
-        st.dataframe(descaled_df.style.format("{:.2f}"))
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("""
+                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0;">Predictions (Original Units)</h3>
+                </div>
+            """, unsafe_allow_html=True)
+            st.dataframe(descaled_df.style.format("{:.2f}"))
 
-        st.subheader("Model Performance (on Last Known Data)")
+        with c2:
+            st.markdown("""
+                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0;">Model Performance (on Last Known Data)</h3>
+                </div>
+            """, unsafe_allow_html=True)
 
-        metrics = []
-        for column in predictions_df.columns:
-            # Get actual and predicted values for the current column
-            actual_values = Y[-future_periods:, predictions_df.columns.get_loc(column)]
-            
-            # Recreate predictions on the last `future_periods` input sequences
-            test_inputs = X[-future_periods:]
-            predicted_values = model.predict(test_inputs, verbose=0)[:, predictions_df.columns.get_loc(column)]
+            metrics = []
+            for column in predictions_df.columns:
+                # Get actual and predicted values for the current column
+                actual_values = Y[-future_periods:, predictions_df.columns.get_loc(column)]
+                
+                # Recreate predictions on the last `future_periods` input sequences
+                test_inputs = X[-future_periods:]
+                predicted_values = model.predict(test_inputs, verbose=0)[:, predictions_df.columns.get_loc(column)]
 
-            # Calculate metrics
-            rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
-            mae = mean_absolute_error(actual_values, predicted_values)
+                # Calculate metrics
+                rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
+                mae = mean_absolute_error(actual_values, predicted_values)
 
-            metrics.append((column, round(rmse, 4), round(mae, 4)))
+                metrics.append((column, round(rmse, 4), round(mae, 4)))
 
-        metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE"])
-        st.dataframe(metrics_df)
+            metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE"])
+            st.dataframe(metrics_df)
 
         # --- WQI Calculation Function ---
         def calculate_wqi(df, parameters):
