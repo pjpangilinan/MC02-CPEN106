@@ -13,7 +13,7 @@ from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
 
-st.image("lawatch.png", use_container_width=True)
+st.image("assets/lawatch.png", use_container_width=True)
 
 st.markdown(f"""
 <style>
@@ -85,7 +85,7 @@ st.markdown(f"""
 
 
 # Load data
-df = pd.read_csv("Spreadmeat_WQxVAxMF.csv")
+df = pd.read_csv("assets/Spreadmeat_WQxVAxMF.csv")
 
 # Setup selections
 sites = ['All Sites'] + list(df["Site"].unique())
@@ -141,7 +141,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     col1, col2 = st.columns([1.5, 1.2])
 
-    # -------- LEFT COLUMN: INTRODUCTION --------
     with col1:
         st.markdown("<h3 style='border-radius: 10px; margin-top: -10px; background-color: green; color: white; padding: 20px;'>Data Mining and Data Visualization for Water Quality Prediction in Taal Lake</h3>", unsafe_allow_html=True)
 
@@ -182,14 +181,14 @@ with tab1:
         </ul>""", unsafe_allow_html=True)
 
     with col2:
-        st.image("lake.jpg")
+        st.image("assets/lake.jpg")
 
         st.markdown(
             "<p style='text-align: center; color: lightgray; font-size: 16px;'>Taal Lake <br> https://shoestringdiary.wordpress.com/2024/08/14/golden-hour-to-sunset-at-taal-lake/</p>",
             unsafe_allow_html=True
         )
 
-        st.image("mmber.jpg")
+        st.image("assets/mmber.jpg")
 
         st.markdown("""<p><strong>Group Members, from left to right:</strong></p>
             <ul>
@@ -203,7 +202,7 @@ with tab1:
         """, unsafe_allow_html=True)
 
 
-with tab2:
+with tab3:
     col1, col2 = st.columns(2)
 
     with col1:
