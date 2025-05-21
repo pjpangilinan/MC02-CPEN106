@@ -13,7 +13,7 @@ from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
 
-st.image("assets/lawatch.png", use_container_width=True)
+st.image("lawatch.png", use_container_width=True)
 
 st.markdown(f"""
 <style>
@@ -85,7 +85,7 @@ st.markdown(f"""
 
 
 # Load data
-df = pd.read_csv("assets/Spreadmeat_WQxVAxMF.csv")
+df = pd.read_csv("Spreadmeat_WQxVAxMF.csv")
 
 # Setup selections
 sites = ['All Sites'] + list(df["Site"].unique())
@@ -181,14 +181,14 @@ with tab1:
         </ul>""", unsafe_allow_html=True)
 
     with col2:
-        st.image("assets/lake.jpg")
+        st.image("lake.jpg")
 
         st.markdown(
             "<p style='text-align: center; color: lightgray; font-size: 16px;'>Taal Lake <br> https://shoestringdiary.wordpress.com/2024/08/14/golden-hour-to-sunset-at-taal-lake/</p>",
             unsafe_allow_html=True
         )
 
-        st.image("assets/mmber.jpg")
+        st.image("mmber.jpg")
 
         st.markdown("""<p><strong>Group Members, from left to right:</strong></p>
             <ul>
