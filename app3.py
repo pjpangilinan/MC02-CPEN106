@@ -202,7 +202,7 @@ with tab1:
         """, unsafe_allow_html=True)
 
 
-with tab3:
+with tab2:
     col1, col2 = st.columns(2)
 
     with col1:
@@ -297,6 +297,7 @@ with tab3:
         # Display plot
         st.pyplot(fig)
 
+with tab3:
     st.markdown(
         """
         <div style='background-color: green; padding: 10px; border-radius: 10px;'>
