@@ -7,10 +7,11 @@ import plotly.express as px
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.impute import KNNImputer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
+from PIL import Image
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
 
@@ -89,6 +90,8 @@ st.markdown(f"""
 }}
 </style>
 """, unsafe_allow_html=True)
+
+
 
 # Load data
 df = pd.read_csv("Spreadmeat_WQxVAxMF.csv")
@@ -354,7 +357,7 @@ with tab1:
     )
 
     st.plotly_chart(fig_wqi, use_container_width=True)
-    
+
 with tab2:
     mode = st.selectbox("Select Prediction Mode", [
         "Water Quality Prediction & Model Comparison",
@@ -466,10 +469,16 @@ with tab2:
             y_pred = model.predict(X_test).flatten()
             mae = mean_absolute_error(y_test, y_pred)
             rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+            r2score = r2_score(y_test, y_pred)
 
             st.subheader("🔍 Model Evaluation")
-            st.write(f"**MAE:** {mae:.3f}")
-            st.write(f"**RMSE:** {rmse:.3f}")
+            m1, m2, m3 = st.columns(3)
+            with m1:
+                st.write(f"**MAE:** {mae:.3f}")
+            with m2:
+                st.write(f"**RMSE:** {rmse:.3f}")
+            with m3:
+                st.write(f"**R2:** {r2score:.3f}")
 
             sample_preds = pd.DataFrame({
                 "Actual": y_test.values[:10],
@@ -514,22 +523,36 @@ with tab2:
     elif mode == "Time Based Prediction & WQI Calculation":
         df_unstandardize = df.copy()
 
-        def build_model(model_type, input_shape, output_dim):
+        def build_model(input_shape, output_dim):
             model = Sequential()
-            if model_type == "CNN":
-                model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
-                model.add(MaxPooling1D(pool_size=2))
-                model.add(Flatten())
-            elif model_type == "LSTM":
-                model.add(LSTM(64, input_shape=input_shape))
-            elif model_type == "CNN-LSTM":
-                model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
-                model.add(MaxPooling1D(pool_size=2))
-                model.add(LSTM(64))
+            model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
+            model.add(MaxPooling1D(pool_size=2))
+            model.add(LSTM(64))
             model.add(Dense(128, activation='relu'))
             model.add(Dense(output_dim, activation='linear'))
             model.compile(optimizer='adam', loss='mse')
             return model
+
+        def prepare_weekly_data(df, site, target_vars, look_back=52):
+            site_data = df[df['Site'] == site].copy()
+            site_data['Date'] = pd.to_datetime(site_data['Date'])
+            site_data.set_index('Date', inplace=True)
+
+            weekly_data = site_data[target_vars].resample('W').mean().interpolate(method='linear').dropna()
+
+            if weekly_data.empty:
+                st.error(f"No data available for the site '{site}' at the weekly granularity.")
+                return None, None, 0, None
+
+            scaler.fit(weekly_data)
+            scaled_data = scaler.transform(weekly_data)
+
+            X, Y = [], []
+            for i in range(len(scaled_data) - look_back):
+                X.append(scaled_data[i:i + look_back])
+                Y.append(scaled_data[i + look_back])
+
+            return np.array(X), np.array(Y), len(X), weekly_data
 
         def prepare_monthly_data(df, site, target_vars, look_back=12):
             site_data = df[df['Site'] == site].copy()
@@ -578,31 +601,33 @@ with tab2:
         st.markdown(
             """
             <div style='background-color: green; padding: 10px; border-radius: 10px;'>
-                <h1 style='font-size: 2.3rem; color: white; text-align: center;'>⏳ Time-Based Prediction</h1>
+                <h1 style='font-size: 2.3rem; color: white; text-align: center;'>⏳ CNN-LSTM Time-Based Prediction</h1>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        col1, col2, col3 = st.columns(3)
-        # UI Inputs
+        col1, col2= st.columns(2)
+
         with col1:
-            prediction_type = st.radio("Select Time Granularity", ["Monthly", "Yearly"])
+            prediction_type = st.radio("Select Time Granularity", ["Weekly", "Monthly", "Yearly"])
         with col2:
-            selected_model = st.selectbox("Choose Model", ["CNN", "LSTM", "CNN-LSTM"])
-        with col3:
             location = st.selectbox("Select Site", df_new['Site'].unique())
 
         target_vars = ['Surface Temp', 'Middle Temp', 'Bottom Temp', 'pH',
                     'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia', 'Phosphate']
 
-        look_back = 12 if prediction_type == "Monthly" else 5
-        future_periods = 12 if prediction_type == "Monthly" else 5
-
-        # Prepare data
-        if prediction_type == "Monthly":
-            X, Y, count, data_used = prepare_monthly_data(df_new, location, target_vars)
-        else:
+        if prediction_type == "Weekly":
+            future_periods = st.number_input("Weeks to Predict", min_value=1, max_value=104, value=52, step=1)
+            look_back = 52
+            X, Y, count, data_used = prepare_weekly_data(df_new, location, target_vars, look_back)
+        elif prediction_type == "Monthly":
+            future_periods = st.number_input("Months to Predict", min_value=1, max_value=36, value=12, step=1)
+            look_back = 12
+            X, Y, count, data_used = prepare_monthly_data(df_new, location, target_vars, look_back)
+        else: 
+            future_periods = st.number_input("Years to Predict", min_value=1, max_value=10, value=5, step=1)
+            look_back = 5
             X, Y, count, data_used = prepare_yearly_data(df_new, location, target_vars, look_back)
 
         if X is None or Y is None:
@@ -630,7 +655,7 @@ with tab2:
             """, unsafe_allow_html=True)
 
             if st.button("Start Prediction"):
-                model = build_model(selected_model, input_shape=(look_back, num_features), output_dim=len(target_vars))
+                model = build_model(input_shape=(look_back, num_features), output_dim=len(target_vars))
                 model.fit(X, Y, epochs=20, batch_size=32, verbose=0)
 
                 # Prediction loop
@@ -649,14 +674,21 @@ with tab2:
                 descaled_df = pd.DataFrame(scaler.inverse_transform(predictions_df),
                                         columns=target_vars)
 
-                c1, c2 = st.columns(2)
+                c1, c2 = st.columns([0.7, 1.3])
                 with c1:
-                    st.markdown("""
+                    if prediction_type == "Weekly":
+                        prediction_title = f"Predictions for the Next {future_periods} Weeks"
+                    elif prediction_type == "Monthly":
+                        prediction_title = f"Predictions for the Next {future_periods} Months"
+                    else:
+                        prediction_title = f"Predictions for the Next {future_periods} Years"
+
+                    st.markdown(f"""
                         <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                            <h3 style="margin: 0;">Predictions (Original Units)</h3>
+                            <h3 style="margin: 0;">{prediction_title}</h3>
                         </div>
                     """, unsafe_allow_html=True)
-                    st.dataframe(descaled_df.style.format("{:.2f}"))
+                    st.dataframe(descaled_df.style.format("{:.2f}"), height=400)
 
                 with c2:
                     st.markdown("""
@@ -677,18 +709,23 @@ with tab2:
                         # Calculate metrics
                         rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
                         mae = mean_absolute_error(actual_values, predicted_values)
+                        r2 = r2_score(actual_values, predicted_values)
 
-                        metrics.append((column, round(rmse, 4), round(mae, 4)))
+                        metrics.append((column, round(rmse, 4), round(mae, 4), round(r2, 2)))
 
-                    metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE"])
-                    metrics_long = metrics_df.melt(id_vars='Variable', value_vars=['RMSE', 'MAE'],
-                                    var_name='Metric', value_name='Value')
+                    metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE", "R2"])
+                    metrics_df['R2_clipped'] = metrics_df['R2'].apply(lambda x: max(0, x))
 
-                    fig, ax = plt.subplots(figsize=(10, 6))
+                    metrics_long = pd.melt(metrics_df, id_vars='Variable',
+                                        value_vars=['RMSE', 'MAE', 'R2_clipped'],
+                                        var_name='Metric', value_name='Value')
+                    metrics_long['Metric'] = metrics_long['Metric'].replace('R2_clipped', 'R2')
+
+                    fig, ax = plt.subplots(figsize=(12, 6))
                     sns.barplot(data=metrics_long, x='Variable', y='Value', hue='Metric', ax=ax)
 
-                    ax.set_title("Model Performance Metrics by Variable")
-                    ax.set_ylabel("Error Value")
+                    ax.set_title("Model Performance Metrics (RMSE, MAE, R²) by Variable")
+                    ax.set_ylabel("Metric Value")
                     ax.set_xlabel("Variable")
                     ax.legend(title="Metric")
                     plt.xticks(rotation=45)
@@ -696,11 +733,11 @@ with tab2:
 
                     for p in ax.patches:
                         height = p.get_height()
-                        if height > 0.01:  
+                        if height > 0.01:
                             ax.annotate(f'{height:.3f}',
                                         (p.get_x() + p.get_width() / 2, height),
                                         ha='center', va='bottom',
-                                        fontsize=9, color='black',
+                                        fontsize=8, color='black',
                                         xytext=(0, 3), textcoords='offset points')
 
                     st.pyplot(fig)
