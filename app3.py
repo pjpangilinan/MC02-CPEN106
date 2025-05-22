@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.express as px
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
@@ -10,7 +11,6 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.impute import KNNImputer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
-from PIL import Image
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
 
@@ -90,8 +90,6 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-
-
 # Load data
 df = pd.read_csv("Spreadmeat_WQxVAxMF.csv")
 
@@ -167,12 +165,12 @@ with tab1:
             </div>
         """, unsafe_allow_html=True)
         dist_col = st.selectbox("Select column for Distribution", df_eda.select_dtypes(include=['float64', 'int64']).columns,  index=list(df_eda.select_dtypes(include=['float64', 'int64']).columns).index("pH"), key="dist")
-        fig1, ax1 = plt.subplots(figsize=(10, 4))
-        sns.histplot(df_eda[dist_col], kde=True, ax=ax1, color='skyblue')
-        ax1.set_title(f"Distribution of {dist_col}")
-        ax1.set_xlabel(dist_col)
-        ax1.set_ylabel("Frequency")
-        st.pyplot(fig1)
+        fig1 = px.histogram(
+            df_eda, x=dist_col, nbins=50,
+            color_discrete_sequence=['skyblue'], opacity=0.75
+        )
+        fig1.update_layout(margin=dict(t=20,b=20), bargap=0.1)
+        st.plotly_chart(fig1, use_container_width=True)
 
         # Full width for line charts
         st.markdown("""
@@ -181,33 +179,64 @@ with tab1:
             </div>
         """, unsafe_allow_html=True)
         df_plot = df_eda.copy()
-        df_plot.set_index('Date', inplace=True)
+        df_plot['Date'] = pd.to_datetime(df_plot['Date'])
+        df_plot = df_plot.sort_values('Date') 
 
         numeric_columns = df_plot.select_dtypes(include=np.number).columns.tolist()
 
         selected_param = st.selectbox("Select Parameter to Plot:", numeric_columns)
 
-        # Plotting
-        fig, ax = plt.subplots(figsize=(14, 6))
-        color = random.choice(['blue', 'green', 'red', 'purple', 'orange', 'cyan', 'magenta', 'brown', 'gray'])
-        ax.plot(df_plot.index, df_plot[selected_param], color=color)
-        ax.set_xlabel("Date")
-        ax.set_ylabel(selected_param)
-        ax.set_title(f"Time Series Plot of {selected_param}")
-        ax.set_xticks(pd.to_datetime([f"{year}-01-01" for year in range(2013, 2025, 2)]))
-        ax.set_xticklabels([str(year) for year in range(2013, 2025, 2)], rotation=45)
-        ax.grid(True)
+        fig_line = px.line(
+            df_plot,
+            x="Date",
+            y=selected_param,
+            title=" ",
+            line_shape="spline",  
+        )
 
-        # Show plot in Streamlit
-        st.pyplot(fig)
+        fig_line.update_layout(
+            margin=dict(t=20,b=20),  
+            xaxis_title="Date",
+            yaxis_title=selected_param,
+            title_x=0.5,
+            height=500,
+            xaxis=dict(
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all")
+                    ])
+                ),
+                rangeslider=dict(visible=True),
+                type="date"
+            )
+        )
+
+        st.plotly_chart(fig_line, use_container_width=True)
 
     with col2:
         st.subheader("🔥 Correlation Heatmap")
         df_filtered = df_eda.select_dtypes(include=np.number)
         correlation_matrix = df_filtered.corr()
-        fig_corr, ax_corr = plt.subplots(figsize=(10, 8.33))
-        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax_corr)
-        st.pyplot(fig_corr)
+       
+        fig_corr = px.imshow(
+            correlation_matrix,
+            text_auto=".2f",        
+            color_continuous_scale="RdBu_r",  
+            title=" ",
+            aspect="auto"
+        )
+
+        fig_corr.update_layout(
+            title_x=0.5,
+            height=590,
+            margin=dict(t=10, b=10)
+        )
+
+        # Display in Streamlit
+        st.plotly_chart(fig_corr, use_container_width=True)
 
         with st.expander("📘 Correlation Analysis Summary", expanded=False):
             st.markdown("""
@@ -237,11 +266,22 @@ with tab1:
             </div>
         """, unsafe_allow_html=True)
         box_col = st.selectbox("Select column for Box Plot", df_eda.select_dtypes(include=['float64', 'int64']).columns, key="box")
-        fig2, ax2 = plt.subplots(figsize=(10, 3.7))
-        sns.boxplot(x=df_eda[box_col], ax=ax2, color='lightgreen')
-        ax2.set_title(f"Box Plot of {box_col}")
-        ax2.set_xlabel(box_col)
-        st.pyplot(fig2)
+        fig_box = px.box(
+            df_eda,
+            y=box_col,
+            title=" ",
+            points="outliers",
+            color_discrete_sequence=["lightgreen"]
+        )
+
+        fig_box.update_layout(
+            yaxis_title=box_col,
+            title_x=0.5,
+            height=450,
+            margin=dict(t=20, b=20)
+        )
+
+        st.plotly_chart(fig_box, use_container_width=True)
         
         # Streamlit header
         st.markdown("""
@@ -268,23 +308,24 @@ with tab1:
                 numeric_columns,
                 index=numeric_columns.index("Dissolved Oxygen")  
         )
-        # Plotting
-        fig, ax = plt.subplots(figsize=(10, 4))
+            
+        fig_scatter = px.strip(df_new, x=x_axis, y=y_axis, title=" ") if x_axis in categorical_columns else px.scatter(
+            df_new,
+            x=x_axis,
+            y=y_axis,
+            opacity=0.7,
+            title=f" "
+        )
 
-        if x_axis in categorical_columns:
-            # If categorical x-axis (like Weather Condition), use seaborn
-            sns.scatterplot(data=df_new, x=x_axis, y=y_axis, ax=ax)
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-        else:
-            ax.scatter(df_new[x_axis], df_new[y_axis], alpha=0.7)
-            ax.set_xlabel(x_axis)
+        fig_scatter.update_layout(
+            xaxis_title=x_axis,
+            yaxis_title=y_axis,
+            title_x=0.5,
+            height=500,
+            margin=dict(t=30, b=30)
+        )
 
-        ax.set_ylabel(y_axis)
-        ax.set_title(f"{x_axis} vs {y_axis}")
-        ax.grid(True)
-
-        # Display plot
-        st.pyplot(fig)
+        st.plotly_chart(fig_scatter, use_container_width=True)
 
     st.markdown("""
         <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
@@ -294,12 +335,26 @@ with tab1:
 
     wqi = pd.read_csv("wqi.csv")
 
-    fig, ax = plt.subplots(figsize=(18, 5))
-    sns.histplot(wqi['WQI'], bins=30, kde=True, color='teal', ax=ax)
-    ax.set_xlabel("WQI")
-    ax.set_ylabel("Frequency")
-    st.pyplot(fig)
+    fig_wqi = px.histogram(
+        wqi,
+        x='WQI',
+        nbins=30,
+        title=" ",
+        color_discrete_sequence=['teal'],
+        opacity=0.75
+    )
 
+    fig_wqi.update_layout(
+        margin=dict(t=20,b=20),  
+        xaxis_title="WQI",
+        yaxis_title="Frequency",
+        title_x=0.5,
+        height=400,
+        bargap=0.1
+    )
+
+    st.plotly_chart(fig_wqi, use_container_width=True)
+    
 with tab2:
     mode = st.selectbox("Select Prediction Mode", [
         "Water Quality Prediction & Model Comparison",
