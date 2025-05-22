@@ -10,78 +10,86 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.impute import KNNImputer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
+from PIL import Image
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide")
 
 st.image("lawatch.png", use_container_width=True)
 
-st.markdown(f"""
+st.markdown(f""" 
 <style>
 .stTabs [data-baseweb="tab-panel"] h2 {{
     color: #003366;
     font-size: 26px;
-    font-weight: bold; /* Make text bold */
+    font-weight: bold;
     margin-top: 0px;
-    margin-bottom: 20px; /* Increase space below the header */
-    font-family: 'Arial', sans-serif; /* Clean and modern font */
-    letter-spacing: 1px; /* Slight letter spacing */
-    text-transform: uppercase; /* Capitalize for emphasis */
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }}
 
 /* Style for tabs on hover */
 .stTabs [data-baseweb="tab"]:hover {{
     background-color: #126f39;
-    color: #FFFFFF; /* Change text to white for better contrast */
-    font-weight: bold; /* Bold text on hover */
+    color: #FFFFFF;
+    font-weight: bold;
     font-family: 'Arial', sans-serif;
     letter-spacing: 1px;
     text-transform: uppercase;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Subtle shadow for better text contrast */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }}
 
 /* Style for the tab list container */
 .stTabs [data-baseweb="tab-list"] {{
-    gap: 30px; /* Increase space between tabs */
-    justify-content: center; /* Center the tabs */
+    gap: 30px;
+    justify-content: center;
+    width: 100% !important;  /* Ensure full width */
+    overflow: visible !important;  /* Prevent clipping/fading */
+    flex-wrap: nowrap !important;  /* Prevent line break */
+    margin-right: 0 !important;  /* Remove default margins */
 }}
 
 /* Style for individual tab headers */
 .stTabs [data-baseweb="tab"] {{
-    height: 50px; /* Increase height for tabs */
-    white-space: pre-wrap; /* Allow wrapping if text is long */
-    border-radius: 6px 6px 0px 0px; /* Rounded top corners */
-    padding: 10px 20px; /* Add padding inside each tab */
-    font-weight: bold; /* Make tab text bold */
-    font-family: 'Arial', sans-serif; /* Clean and modern font */
-    text-align: center; /* Center align the text */
-    letter-spacing: 1px; /* Slight letter spacing */
-    text-transform: uppercase; /* Capitalize text */
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Subtle text shadow */
-    transition: all 0.3s ease; /* Smooth transition effect */
+    height: 50px;
+    flex: 1;
+    white-space: pre-wrap;
+    border-radius: 6px 6px 0px 0px;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    box-sizing: border-box;  /* Fix layout overflow */
 }}
 
 /* Style for the button inside the tab list */
 .stTabs [data-baseweb="tab-list"] button {{
-    padding: 15px 30px; /* Adjust padding for a more spacious look */
+    padding: 15px 30px;
 }}
 
 /* Highlight style for the selected tab */
 .stTabs [data-baseweb="tab-highlight"] {{
     background-color: green;
-    height: 4px; /* Slightly thicker highlight */
-    border-radius: 2px; /* Rounded corners for the highlight */
+    height: 4px;
+    border-radius: 2px;
     color: dark-green;
 }}
 
 /* Style for selected tab */
 .stTabs [aria-selected="true"] {{
-    background-color: #5cc37f; /* Darker blue for selected tab */
-    color: #FFFFFF !important; /* White text when selected */
-    font-weight: bold; /* Bold text for selected tab */
-    height: 55px; /* Slightly taller for emphasis */
+    background-color: #5cc37f;
+    color: #FFFFFF !important;
+    font-weight: bold;
+    height: 55px;
 }}
 </style>
-""", unsafe_allow_html=True) # Render the CSS
+""", unsafe_allow_html=True)
+
 
 
 # Load data
@@ -129,88 +137,42 @@ df_new[numeric_cols] = scaler.fit_transform(df_new[numeric_cols])
 df_scaled = df_new.copy()
 
 # Main UI
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Introduction",
-    "Exploratory Data Analysis", 
-    "Prediction & Model Comparison", 
-    "Prediction & WQI Calculation",
-    "Recommendations"
+tab1, tab2 = st.tabs([
+    "Exploratory Data Analysis",
+    "Water Quality Prediction"
 ])
 
-
 with tab1:
-    col1, col2 = st.columns([1.5, 1.2])
-
-    with col1:
-        st.markdown("<h3 style='border-radius: 10px; margin-top: -10px; background-color: green; color: white; padding: 20px;'>Data Mining and Data Visualization for Water Quality Prediction in Taal Lake</h3>", unsafe_allow_html=True)
-
-        st.markdown("<h3>🎯 Objectives</h3>", unsafe_allow_html=True)
-        st.markdown("""
-        <p style='text-align: justify;'>This laboratory aims to apply data mining techniques to extract actionable insights from environmental datasets. 
-        It focuses on developing predictive models for water quality in Taal Lake using machine learning, 
-        particularly ensemble learning methods such as CNN, LSTM, and Hybrid CNN-LSTM.</p>
-
-        <ul>
-        <li>Apply data mining techniques to extract useful insights from environmental datasets.</li>
-        <li>Develop predictive models for water quality using machine learning.</li>
-        <li>Compare ensemble learning techniques such as CNN, LSTM, and Hybrid CNN-LSTM.</li>
-        <li>Visualize trends and patterns in water quality parameters.</li>
-        <li>Interpret the impact of environmental and volcanic activity on water quality.</li>
-        <li>Predict Water Quality Index (WQI) and Water Pollutant Levels with actionable insights for environmental monitoring and intervention.</li>
-        </ul>
-        """, unsafe_allow_html=True)
-
-        st.markdown("<h3>🛠️ Materials & Tools</h3>", unsafe_allow_html=True)
-
-        st.markdown("""
-        <p style='text-align: justify;'>The analysis was conducted using Python in Google Colab.
-        Essential libraries include Pandas and NumPy for data processing, Matplotlib and Seaborn for visualization,
-        Scikit-learn for traditional machine learning, TensorFlow/Keras for deep learning models,
-        and Streamlit for building an interactive dashboard.</p>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <p style='text-align: justify;'>The dataset used in this study consists of Taal Lake water quality reports from 2013 to 2023, 
-        provided by the Bureau of Fisheries and Aquatic Resources (BFAR). It includes both environmental 
-        and volcanic activity indicators.</p>
-        <ul>
-            <li><p><em>Weather Factors:</em> Weather condition, wind direction, and air temperature.<br></li>
-            <li><em>Water Quality Parameters:</em> Surface, middle, and bottom water temperatures, pH, dissolved oxygen, 
-        nitrogen (as nitrite or nitrate), ammonia, and phosphate.<br></li>
-            <li><em>Volcanic Activity Indicators:</em> Sulfide and carbon dioxide concentrations.</p></li>
-        </ul>""", unsafe_allow_html=True)
-
-    with col2:
-        st.image("lake.jpg")
-
-        st.markdown(
-            "<p style='text-align: center; color: lightgray; font-size: 16px;'>Taal Lake <br> https://shoestringdiary.wordpress.com/2024/08/14/golden-hour-to-sunset-at-taal-lake/</p>",
-            unsafe_allow_html=True
-        )
-
-        st.image("mmber.jpg")
-
-        st.markdown("""<p><strong>Group Members, from left to right:</strong></p>
-            <ul>
-                <li>Papa, Mark Jamir C.</li>
-                <li>Vidad, Ranjo B.</li>
-                <li>Mojica, Warreon Dave A.</li>
-                <li>Dizon, Rockwell E.</li>
-                <li>Pangilinan, Patrick James A.</li>
-                <li>Lineses, Dann B.</li>
-            </ul>
-        """, unsafe_allow_html=True)
-
-
-with tab2:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Dataset Overview")
-        st.write(df_eda.head())
+        st.subheader("📂 Dataset Overview")
 
-        st.subheader("Summary Statistics")
-        st.write(df_eda.describe())
+        num_rows = st.slider("Select number of rows to view", min_value=5, max_value=100, value=10)
+
+        columns_to_view = st.multiselect(
+            "Select columns to display",
+            options=df_eda.columns.tolist(),
+            default=df_eda.columns.tolist()[:5]  
+        )
+
+        st.dataframe(df_eda[columns_to_view].head(num_rows), height=400)
+
+        with st.expander("📊 Summary Statistics", expanded=False):
+            st.write(df_eda.describe().T.style.format("{:.2f}"))
+
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Parameter Distribution</h3>
+            </div>
+        """, unsafe_allow_html=True)
+        dist_col = st.selectbox("Select column for Distribution", df_eda.select_dtypes(include=['float64', 'int64']).columns,  index=list(df_eda.select_dtypes(include=['float64', 'int64']).columns).index("pH"), key="dist")
+        fig1, ax1 = plt.subplots(figsize=(10, 4))
+        sns.histplot(df_eda[dist_col], kde=True, ax=ax1, color='skyblue')
+        ax1.set_title(f"Distribution of {dist_col}")
+        ax1.set_xlabel(dist_col)
+        ax1.set_ylabel("Frequency")
+        st.pyplot(fig1)
 
         # Full width for line charts
         st.markdown("""
@@ -223,7 +185,6 @@ with tab2:
 
         numeric_columns = df_plot.select_dtypes(include=np.number).columns.tolist()
 
-        # Streamlit dropdown for parameter selection
         selected_param = st.selectbox("Select Parameter to Plot:", numeric_columns)
 
         # Plotting
@@ -239,11 +200,12 @@ with tab2:
 
         # Show plot in Streamlit
         st.pyplot(fig)
+
     with col2:
-        st.subheader("Correlation Heatmap")
+        st.subheader("🔥 Correlation Heatmap")
         df_filtered = df_eda.select_dtypes(include=np.number)
         correlation_matrix = df_filtered.corr()
-        fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
+        fig_corr, ax_corr = plt.subplots(figsize=(10, 8.33))
         sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax_corr)
         st.pyplot(fig_corr)
 
@@ -264,26 +226,53 @@ with tab2:
             </ul>
             """, unsafe_allow_html=True)
 
+       
         df_eda['Weather Condition'] = df_eda['Weather Condition'].astype(str)
         sorted_conditions = sorted(df_eda['Weather Condition'].unique())
         df_eda['Weather Condition'] = pd.Categorical(df_eda['Weather Condition'], categories=sorted_conditions, ordered=True)
 
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Parameter Box Plot</h3>
+            </div>
+        """, unsafe_allow_html=True)
+        box_col = st.selectbox("Select column for Box Plot", df_eda.select_dtypes(include=['float64', 'int64']).columns, key="box")
+        fig2, ax2 = plt.subplots(figsize=(10, 3.7))
+        sns.boxplot(x=df_eda[box_col], ax=ax2, color='lightgreen')
+        ax2.set_title(f"Box Plot of {box_col}")
+        ax2.set_xlabel(box_col)
+        st.pyplot(fig2)
+        
         # Streamlit header
         st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; max-width: 1000px; justify-content: center; border-radius: 8px; text-align: center;">
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Scatter Plots for Parameter Relationships</h3>
             </div>
         """, unsafe_allow_html=True)
 
+        # Select columns for X and Y
         numeric_columns = df_new.select_dtypes(include=['float64', 'int64']).columns.tolist()
         categorical_columns = ['Weather Condition', 'Wind Direction']
+        x, y = st.columns(2)
 
-        x_axis = st.selectbox("Select X-axis parameter", categorical_columns + numeric_columns)
-        y_axis = st.selectbox("Select Y-axis parameter", numeric_columns)
+        with x:
+            x_axis = st.selectbox(
+                "Select X-axis parameter",
+                categorical_columns + numeric_columns,
+                index=(categorical_columns + numeric_columns).index("pH") 
+            )
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+        with y:
+            y_axis = st.selectbox(
+                "Select Y-axis parameter",
+                numeric_columns,
+                index=numeric_columns.index("Dissolved Oxygen")  
+        )
+        # Plotting
+        fig, ax = plt.subplots(figsize=(10, 4))
 
         if x_axis in categorical_columns:
+            # If categorical x-axis (like Weather Condition), use seaborn
             sns.scatterplot(data=df_new, x=x_axis, y=y_axis, ax=ax)
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
         else:
@@ -297,390 +286,453 @@ with tab2:
         # Display plot
         st.pyplot(fig)
 
-with tab3:
-    st.markdown(
-        """
-        <div style='background-color: green; padding: 10px; border-radius: 10px;'>
-            <h1 style='font-size: 2.3rem; color: white; text-align: center;'>Water Quality Prediction & Model Comparison Dashboard for Taal Lake</h1>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    with st.container():
-        st.markdown("### 🔎 Selection Filters for Water Quality Prediction")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            selected_site = st.selectbox("Select Site", sites)
-            selected_features = st.selectbox("Select Feature Set", feature_options)
-
-        with col2:
-            selected_parameter = st.selectbox("Select Water Parameter to Predict", water_parameters)
-            date_range = st.select_slider(
-                "Select Date Range",
-                options=pd.date_range(start="2013-01-01", end="2023-12-01", freq="MS").strftime('%Y-%m').tolist(),
-                value=("2013-01", "2023-12")
-            )
-
-    start_date = pd.to_datetime(date_range[0])
-    end_date = pd.to_datetime(date_range[1])
-
-    with st.expander("Selected Options", expanded=True):
-        st.markdown(f"""
-        - **Site**: {selected_site}
-        - **Date Range**: {start_date.strftime('%B %Y')} to {end_date.strftime('%B %Y')}
-        - **Feature Set**: {selected_features}
-        - **Selected Water Parameter to Predict**: {selected_parameter}
-        """)
-
-    df_filtered = df_scaled.copy()
-
-    if selected_site != "All Sites":
-        df_filtered = df_filtered[df_filtered["Site"] == selected_site]
-
-    df_filtered = df_filtered[(df_filtered["Date"] >= start_date) & (df_filtered["Date"] <= end_date)]
-
-    if df_filtered.shape[0] < 10:
-        st.error("Not enough data for the selected filters. Please choose another site or expand the date range.")
-        st.stop()
-
-    if selected_features == "Water Parameters Only":
-        X = df_filtered[water_parameters]
-    else:
-        encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        encoded_cat_data = encoder.fit_transform(df_filtered[categorical])
-        encoded_cat_cols = encoder.get_feature_names_out(categorical)
-        encoded_cat_df = pd.DataFrame(encoded_cat_data, columns=encoded_cat_cols, index=df_filtered.index)
-
-        selected_features = water_parameters + external_params
-        X = pd.concat([df_filtered[selected_features], encoded_cat_df], axis=1)
-
-    y = df_filtered[selected_parameter]
-    X = np.array(X).reshape(X.shape[0], X.shape[1], 1)
-
-    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=42)
-    X_valid, X_test, y_valid, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
-
-    def build_model(model_type, input_shape):
-        model = Sequential()
-        if model_type == "CNN":
-            model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
-            model.add(MaxPooling1D(pool_size=2))
-            model.add(Flatten())
-        elif model_type == "LSTM":
-            model.add(LSTM(64, input_shape=input_shape))
-        elif model_type == "CNN-LSTM":
-            model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
-            model.add(MaxPooling1D(pool_size=2))
-            model.add(LSTM(64))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(1, activation='linear'))
-        model.compile(optimizer='adam', loss='mse')
-        return model
-
-    def plot_actual_vs_predicted(y_test, y_pred, title):
-        plt.figure(figsize=(8,6))
-        sns.scatterplot(x=y_test, y=y_pred)
-        plt.xlabel('Actual')
-        plt.ylabel('Predicted')
-        plt.title(title)
-        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
-        st.pyplot(plt)
-
-    predictions_df = pd.DataFrame()
-
-    def train_and_evaluate(model_type, X_train, X_valid, X_test, y_train, y_valid, y_test, selected_param):
-        st.markdown(f"""
-            <div style="background-color: green; border-radius: 10px; color: white; text-align: center; width: 100%; padding: 10px;">
-                <h1 style="color: white;">{model_type} Model</h1>
-                <h3 style="color: white;">Predicting {selected_param}</h3>
-            </div>
-        """, unsafe_allow_html=True)
-        model = build_model(model_type, (X_train.shape[1], 1))
-        model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_valid, y_valid), verbose=0)
-        y_pred = model.predict(X_test).flatten()
-        mae = mean_absolute_error(y_test, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-
-        st.subheader("🔍 Model Evaluation")
-        st.write(f"**MAE:** {mae:.3f}")
-        st.write(f"**RMSE:** {rmse:.3f}")
-
-        sample_preds = pd.DataFrame({
-            "Actual": y_test.values[:10],
-            "Predicted": y_pred[:10]
-        })
-
-        st.subheader("Sample Predictions")
-        st.write(sample_preds)
-
-        plot_actual_vs_predicted(y_test, y_pred, f'{model_type} Model')
-
-        return y_pred
-
     st.markdown("""
-        <style>
-            div.stButton > button:first-child {
-                background-color: green;
-                color: white;
-                width: 100%;
-                padding: 10px;
-                font-size: 16px;
-                font-weight: bold;
-                border-radius: 8px;
-            }
-            div.stButton > button:first-child:hover {
-                background-color: darkgreen;
-                color: white;
-            }
-        </style>
+        <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+            <h3 style="margin: 0;">Water Quality Index Distribution</h3>
+        </div>
     """, unsafe_allow_html=True)
 
-    if st.button("Start Prediction"):
-        col1, col2, col3 = st.columns(3)
+    wqi = pd.read_csv("wqi.csv")
 
-        with col1:
-            train_and_evaluate("CNN", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
-        with col2:
-            train_and_evaluate("LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
-        with col3:
-            train_and_evaluate("CNN-LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+    fig, ax = plt.subplots(figsize=(18, 5))
+    sns.histplot(wqi['WQI'], bins=30, kde=True, color='teal', ax=ax)
+    ax.set_xlabel("WQI")
+    ax.set_ylabel("Frequency")
+    st.pyplot(fig)
 
-with tab4:
-    df_unstandardize = df.copy()
+with tab2:
+    mode = st.selectbox("Select Prediction Mode", [
+        "Water Quality Prediction & Model Comparison",
+        "Time Based Prediction & WQI Calculation"
+    ])
 
-    def build_model(model_type, input_shape, output_dim):
-        model = Sequential()
-        if model_type == "CNN":
-            model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
-            model.add(MaxPooling1D(pool_size=2))
-            model.add(Flatten())
-        elif model_type == "LSTM":
-            model.add(LSTM(64, input_shape=input_shape))
-        elif model_type == "CNN-LSTM":
-            model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
-            model.add(MaxPooling1D(pool_size=2))
-            model.add(LSTM(64))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(output_dim, activation='linear'))
-        model.compile(optimizer='adam', loss='mse')
-        return model
+    if mode == "Water Quality Prediction & Model Comparison":
+        st.markdown(
+            """
+            <div style='background-color: green; padding: 10px; border-radius: 10px;'>
+                <h1 style='font-size: 2.3rem; color: white; text-align: center;'>Water Quality Prediction & Model Comparison</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-    def prepare_monthly_data(df, site, target_vars, look_back=12):
-        site_data = df[df['Site'] == site].copy()
-        site_data['Date'] = pd.to_datetime(site_data['Date'])
-        site_data.set_index('Date', inplace=True)
-        
-        # Monthly average
-        monthly_data = site_data[target_vars].resample('M').mean().dropna()
-        
-        if monthly_data.empty:
-            st.error(f"No data available for the site '{site}' at the monthly granularity.")
-            return None, None, 0, None
-        
-        scaler.fit(monthly_data)
-        scaled_data = scaler.transform(monthly_data)
-        
-        X, Y = [], []
-        for i in range(len(scaled_data) - look_back):
-            X.append(scaled_data[i:i + look_back])
-            Y.append(scaled_data[i + look_back])
-            
-        return np.array(X), np.array(Y), len(X), monthly_data
-    
-    def prepare_yearly_data(df, site, target_vars, look_back=5):
-        site_data = df[df['Site'] == site].copy()
-        site_data['Date'] = pd.to_datetime(site_data['Date'])
-        site_data.set_index('Date', inplace=True)
-        
-        # Yearly average
-        yearly_data = site_data[target_vars].resample('Y').mean().dropna()
-        
-        if yearly_data.empty:
-            st.error(f"No data available for the site '{site}' at the yearly granularity.")
-            return None, None, 0, None
-        
-        scaler.fit(yearly_data)
-        scaled_data = scaler.transform(yearly_data)
-        
-        X, Y = [], []
-        for i in range(len(scaled_data) - look_back):
-            X.append(scaled_data[i:i + look_back])
-            Y.append(scaled_data[i + look_back])
-            
-        return np.array(X), np.array(Y), len(X), yearly_data
+        with st.container():
+            st.markdown("### 🔎 Selection Filters for Water Quality Prediction")
+            col1, col2 = st.columns(2)
 
-    st.markdown(
-        """
-        <div style='background-color: green; padding: 10px; border-radius: 10px;'>
-            <h1 style='font-size: 2.3rem; color: white; text-align: center;'>⏳ Time-Based Prediction</h1>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            with col1:
+                selected_site = st.selectbox("Select Site", sites)
+                selected_features = st.selectbox("Select Feature Set", feature_options)
 
-    col1, col2, col3 = st.columns(3)
-    # UI Inputs
-    with col1:
-        prediction_type = st.radio("Select Time Granularity", ["Monthly", "Yearly"])
-    with col2:
-        selected_model = st.selectbox("Choose Model", ["CNN", "LSTM", "CNN-LSTM"])
-    with col3:
-        location = st.selectbox("Select Site", df_new['Site'].unique())
+            with col2:
+                selected_parameter = st.selectbox("Select Water Parameter to Predict", water_parameters)
+                date_range = st.select_slider(
+                    "Select Date Range",
+                    options=pd.date_range(start="2013-01-01", end="2023-12-01", freq="MS").strftime('%Y-%m').tolist(),
+                    value=("2013-01", "2023-12")
+                )
 
-    target_vars = ['Surface Temp', 'Middle Temp', 'Bottom Temp', 'pH',
-                   'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia', 'Phosphate']
+        start_date = pd.to_datetime(date_range[0])
+        end_date = pd.to_datetime(date_range[1])
 
-    look_back = 12 if prediction_type == "Monthly" else 5
-    future_periods = 12 if prediction_type == "Monthly" else 5
+        with st.expander("Selected Options", expanded=True):
+            st.markdown(f"""
+            - **Site**: {selected_site}
+            - **Date Range**: {start_date.strftime('%B %Y')} to {end_date.strftime('%B %Y')}
+            - **Feature Set**: {selected_features}
+            - **Selected Water Parameter to Predict**: {selected_parameter}
+            """)
 
-    # Prepare data
-    if prediction_type == "Monthly":
-        X, Y, count, data_used = prepare_monthly_data(df_new, location, target_vars)
-    else:
-        X, Y, count, data_used = prepare_yearly_data(df_new, location, target_vars, look_back)
+        df_filtered = df_scaled.copy()
 
-    if X is None or Y is None:
-        st.error("Data preparation failed due to insufficient data. Please check your data and site selection.")
-    else:
-        st.write(f"Total usable records: {count}")
-        num_features = X.shape[2]
+        if selected_site != "All Sites":
+            df_filtered = df_filtered[df_filtered["Site"] == selected_site]
 
-        # Build and train model
-        model = build_model(selected_model, input_shape=(look_back, num_features), output_dim=len(target_vars))
-        model.fit(X, Y, epochs=100, batch_size=32, verbose=0)
+        df_filtered = df_filtered[(df_filtered["Date"] >= start_date) & (df_filtered["Date"] <= end_date)]
 
-        # Prediction loop
-        last_data = data_used[target_vars].values[-look_back:]
-        predictions = []
-        for _ in range(future_periods):
-            input_data = last_data[-look_back:].reshape(1, look_back, len(target_vars))
-            pred = model.predict(input_data, verbose=0)[0]
-            predictions.append(pred)
-            last_data = np.vstack([last_data, pred])
+        if df_filtered.shape[0] < 10:
+            st.error("Not enough data for the selected filters. Please choose another site or expand the date range.")
+            st.stop()
 
-        predictions_df = pd.DataFrame(predictions, columns=target_vars)
+        if selected_features == "Water Parameters Only":
+            X = df_filtered[water_parameters]
+        else:
+            encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+            encoded_cat_data = encoder.fit_transform(df_filtered[categorical])
+            encoded_cat_cols = encoder.get_feature_names_out(categorical)
+            encoded_cat_df = pd.DataFrame(encoded_cat_data, columns=encoded_cat_cols, index=df_filtered.index)
 
-        # Inverse scale predictions
-        scaler.fit(df_unstandardize[target_vars])
-        descaled_df = pd.DataFrame(scaler.inverse_transform(predictions_df),
-                                   columns=target_vars)
+            selected_features = water_parameters + external_params
+            X = pd.concat([df_filtered[selected_features], encoded_cat_df], axis=1)
 
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("""
-                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0;">Predictions (Original Units)</h3>
+        y = df_filtered[selected_parameter]
+        X = np.array(X).reshape(X.shape[0], X.shape[1], 1)
+
+        X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=42)
+        X_valid, X_test, y_valid, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+
+        def build_model(model_type, input_shape):
+            model = Sequential()
+            if model_type == "CNN":
+                model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
+                model.add(MaxPooling1D(pool_size=2))
+                model.add(Flatten())
+            elif model_type == "LSTM":
+                model.add(LSTM(64, input_shape=input_shape))
+            elif model_type == "CNN-LSTM":
+                model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
+                model.add(MaxPooling1D(pool_size=2))
+                model.add(LSTM(64))
+            model.add(Dense(128, activation='relu'))
+            model.add(Dense(1, activation='linear'))
+            model.compile(optimizer='adam', loss='mse')
+            return model
+
+        def plot_actual_vs_predicted(y_test, y_pred, title):
+            plt.figure(figsize=(8,6))
+            sns.scatterplot(x=y_test, y=y_pred)
+            plt.xlabel('Actual')
+            plt.ylabel('Predicted')
+            plt.title(title)
+            plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+            st.pyplot(plt)
+
+        predictions_df = pd.DataFrame()
+
+        def train_and_evaluate(model_type, X_train, X_valid, X_test, y_train, y_valid, y_test, selected_param):
+            st.markdown(f"""
+                <div style="background-color: green; border-radius: 10px; color: white; text-align: center; width: 100%; padding: 10px;">
+                    <h1 style="color: white;">{model_type} Model</h1>
+                    <h3 style="color: white;">Predicting {selected_param}</h3>
                 </div>
             """, unsafe_allow_html=True)
-            st.dataframe(descaled_df.style.format("{:.2f}"))
+            model = build_model(model_type, (X_train.shape[1], 1))
+            model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_valid, y_valid), verbose=0)
+            y_pred = model.predict(X_test).flatten()
+            mae = mean_absolute_error(y_test, y_pred)
+            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 
-        with c2:
-            st.markdown("""
-                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0;">Model Performance (on Last Known Data)</h3>
-                </div>
-            """, unsafe_allow_html=True)
+            st.subheader("🔍 Model Evaluation")
+            st.write(f"**MAE:** {mae:.3f}")
+            st.write(f"**RMSE:** {rmse:.3f}")
 
-            metrics = []
-            for column in predictions_df.columns:
-                # Get actual and predicted values for the current column
-                actual_values = Y[-future_periods:, predictions_df.columns.get_loc(column)]
+            sample_preds = pd.DataFrame({
+                "Actual": y_test.values[:10],
+                "Predicted": y_pred[:10]
+            })
+
+            st.subheader("Sample Predictions")
+            st.write(sample_preds)
+
+            plot_actual_vs_predicted(y_test, y_pred, f'{model_type} Model')
+
+            return y_pred
+
+        st.markdown("""
+            <style>
+                div.stButton > button:first-child {
+                    background-color: green;
+                    color: white;
+                    width: 100%;
+                    padding: 10px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    border-radius: 8px;
+                }
+                div.stButton > button:first-child:hover {
+                    background-color: darkgreen;
+                    color: white;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        if st.button("Start Prediction"):
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                train_and_evaluate("CNN", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+            with col2:
+                train_and_evaluate("LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+            with col3:
+                train_and_evaluate("CNN-LSTM", X_train, X_valid, X_test, y_train, y_valid, y_test, selected_parameter)
+
+    elif mode == "Time Based Prediction & WQI Calculation":
+        df_unstandardize = df.copy()
+
+        def build_model(model_type, input_shape, output_dim):
+            model = Sequential()
+            if model_type == "CNN":
+                model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
+                model.add(MaxPooling1D(pool_size=2))
+                model.add(Flatten())
+            elif model_type == "LSTM":
+                model.add(LSTM(64, input_shape=input_shape))
+            elif model_type == "CNN-LSTM":
+                model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
+                model.add(MaxPooling1D(pool_size=2))
+                model.add(LSTM(64))
+            model.add(Dense(128, activation='relu'))
+            model.add(Dense(output_dim, activation='linear'))
+            model.compile(optimizer='adam', loss='mse')
+            return model
+
+        def prepare_monthly_data(df, site, target_vars, look_back=12):
+            site_data = df[df['Site'] == site].copy()
+            site_data['Date'] = pd.to_datetime(site_data['Date'])
+            site_data.set_index('Date', inplace=True)
+            
+            # Monthly average
+            monthly_data = site_data[target_vars].resample('M').mean().dropna()
+            
+            if monthly_data.empty:
+                st.error(f"No data available for the site '{site}' at the monthly granularity.")
+                return None, None, 0, None
+            
+            scaler.fit(monthly_data)
+            scaled_data = scaler.transform(monthly_data)
+            
+            X, Y = [], []
+            for i in range(len(scaled_data) - look_back):
+                X.append(scaled_data[i:i + look_back])
+                Y.append(scaled_data[i + look_back])
                 
-                # Recreate predictions on the last `future_periods` input sequences
-                test_inputs = X[-future_periods:]
-                predicted_values = model.predict(test_inputs, verbose=0)[:, predictions_df.columns.get_loc(column)]
+            return np.array(X), np.array(Y), len(X), monthly_data
+        
+        def prepare_yearly_data(df, site, target_vars, look_back=5):
+            site_data = df[df['Site'] == site].copy()
+            site_data['Date'] = pd.to_datetime(site_data['Date'])
+            site_data.set_index('Date', inplace=True)
+            
+            # Yearly average
+            yearly_data = site_data[target_vars].resample('Y').mean().dropna()
+            
+            if yearly_data.empty:
+                st.error(f"No data available for the site '{site}' at the yearly granularity.")
+                return None, None, 0, None
+            
+            scaler.fit(yearly_data)
+            scaled_data = scaler.transform(yearly_data)
+            
+            X, Y = [], []
+            for i in range(len(scaled_data) - look_back):
+                X.append(scaled_data[i:i + look_back])
+                Y.append(scaled_data[i + look_back])
+                
+            return np.array(X), np.array(Y), len(X), yearly_data
 
-                # Calculate metrics
-                rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
-                mae = mean_absolute_error(actual_values, predicted_values)
+        st.markdown(
+            """
+            <div style='background-color: green; padding: 10px; border-radius: 10px;'>
+                <h1 style='font-size: 2.3rem; color: white; text-align: center;'>⏳ Time-Based Prediction</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-                metrics.append((column, round(rmse, 4), round(mae, 4)))
+        col1, col2, col3 = st.columns(3)
+        # UI Inputs
+        with col1:
+            prediction_type = st.radio("Select Time Granularity", ["Monthly", "Yearly"])
+        with col2:
+            selected_model = st.selectbox("Choose Model", ["CNN", "LSTM", "CNN-LSTM"])
+        with col3:
+            location = st.selectbox("Select Site", df_new['Site'].unique())
 
-            metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE"])
-            st.dataframe(metrics_df)
+        target_vars = ['Surface Temp', 'Middle Temp', 'Bottom Temp', 'pH',
+                    'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia', 'Phosphate']
 
-        # --- WQI Calculation Function ---
-        def calculate_wqi(df, parameters):
-            weights = {
-                'pH': 0.15,
-                'Dissolved Oxygen': 0.25,
-                'Nitrite': 0.10,
-                'Nitrate': 0.10,
-                'Ammonia': 0.15,
-                'Phosphate': 0.10,
-                'Surface Temp': 0.05,
-                'Middle Temp': 0.05,
-                'Bottom Temp': 0.05,
-            }
+        look_back = 12 if prediction_type == "Monthly" else 5
+        future_periods = 12 if prediction_type == "Monthly" else 5
 
-            missing_params = [param for param in parameters if param not in df.columns]
-            if missing_params:
-                st.error(f"Missing parameters in DataFrame: {missing_params}")
-                return pd.Series([None] * len(df))
+        # Prepare data
+        if prediction_type == "Monthly":
+            X, Y, count, data_used = prepare_monthly_data(df_new, location, target_vars)
+        else:
+            X, Y, count, data_used = prepare_yearly_data(df_new, location, target_vars, look_back)
 
-            weighted_values = df[parameters].apply(lambda x: x * weights[x.name], axis=0)
-            return weighted_values.sum(axis=1)
+        if X is None or Y is None:
+            st.error("Data preparation failed due to insufficient data. Please check your data and site selection.")
+        else:
+            st.write(f"Total usable records: {count}")
+            num_features = X.shape[2]
 
-        # --- Classification Function ---
-        def classify_water_quality(wqi):
-            if wqi >= 90:
-                return 'Excellent'
-            elif wqi >= 70:
-                return 'Good'
-            elif wqi >= 50:
-                return 'Fair'
-            elif wqi >= 25:
-                return 'Poor'
-            else:
-                return 'Very Poor'
+            st.markdown("""
+            <style>
+                div.stButton > button:first-child {
+                    background-color: green;
+                    color: white;
+                    width: 100%;
+                    padding: 10px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    border-radius: 8px;
+                }
+                div.stButton > button:first-child:hover {
+                    background-color: darkgreen;
+                    color: white;
+                }
+            </style>
+            """, unsafe_allow_html=True)
 
-        # --- Calculate and Display WQI ---
-        st.subheader("Water Quality Index (WQI) and Classification")
+            if st.button("Start Prediction"):
+                model = build_model(selected_model, input_shape=(look_back, num_features), output_dim=len(target_vars))
+                model.fit(X, Y, epochs=20, batch_size=32, verbose=0)
 
-        # Parameters used in WQI
-        wqi_params = ['pH', 'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia',
-                    'Phosphate', 'Surface Temp', 'Middle Temp', 'Bottom Temp']
+                # Prediction loop
+                last_data = data_used[target_vars].values[-look_back:]
+                predictions = []
+                for _ in range(future_periods):
+                    input_data = last_data[-look_back:].reshape(1, look_back, len(target_vars))
+                    pred = model.predict(input_data, verbose=0)[0]
+                    predictions.append(pred)
+                    last_data = np.vstack([last_data, pred])
 
-        # Calculate WQI from descaled predictions
-        descaled_df['WQI'] = calculate_wqi(descaled_df, wqi_params)
-        descaled_df['Water Quality'] = descaled_df['WQI'].apply(classify_water_quality)
+                predictions_df = pd.DataFrame(predictions, columns=target_vars)
 
-        # Format numeric columns before displaying
-        def format_numeric_columns(df):
-            for col in df.select_dtypes(include=['float64', 'int64']).columns:
-                df[col] = df[col].apply(lambda x: f"{x:.2f}")
-            return df
+                # Inverse scale predictions
+                scaler.fit(df_unstandardize[target_vars])
+                descaled_df = pd.DataFrame(scaler.inverse_transform(predictions_df),
+                                        columns=target_vars)
 
-        # Apply formatting
-        formatted_df = format_numeric_columns(descaled_df)
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.markdown("""
+                        <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                            <h3 style="margin: 0;">Predictions (Original Units)</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.dataframe(descaled_df.style.format("{:.2f}"))
 
-        # Display the formatted dataframe
-        st.dataframe(formatted_df)
+                with c2:
+                    st.markdown("""
+                        <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                            <h3 style="margin: 0;">Model Performance (on Last Known Data)</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-with tab5:
-    st.subheader("Recommendations")
+                    metrics = []
+                    for column in predictions_df.columns:
+                        # Get actual and predicted values for the current column
+                        actual_values = Y[-future_periods:, predictions_df.columns.get_loc(column)]
+                        
+                        # Recreate predictions on the last `future_periods` input sequences
+                        test_inputs = X[-future_periods:]
+                        predicted_values = model.predict(test_inputs, verbose=0)[:, predictions_df.columns.get_loc(column)]
 
-    st.markdown(
-        """
-        <ul>
-          <li>
-            <strong>Getting more data from PHILVOCS and PAGASA</strong> – Improve the dataset with environmental and meteorological data to improve prediction accuracy.
-          </li>
-          <li>
-            <strong>Daily Water Quality Prediction</strong> – Have daily prediction for each parameter, for each location.
-          </li>
-          <li>
-            <strong>Adding the Year 2024</strong> – Incorporate the most recent data for continuity and better trend analysis.
-          </li>
-          <li>
-            <strong>Tweaking the Parameters of Machine Learning</strong> – Fine-tune hyperparameters to boost model performance and reduce prediction errors.
-          </li>
-          <li>
-            <strong>Use Latest Predictive Models like Transformer or AutoML</strong> – Include advanced models to enhance sequential learning and automate model optimization.
-          </li>
-        </ul>
-        """,
-        unsafe_allow_html=True
-    )
+                        # Calculate metrics
+                        rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
+                        mae = mean_absolute_error(actual_values, predicted_values)
+
+                        metrics.append((column, round(rmse, 4), round(mae, 4)))
+
+                    metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE"])
+                    metrics_long = metrics_df.melt(id_vars='Variable', value_vars=['RMSE', 'MAE'],
+                                    var_name='Metric', value_name='Value')
+
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    sns.barplot(data=metrics_long, x='Variable', y='Value', hue='Metric', ax=ax)
+
+                    ax.set_title("Model Performance Metrics by Variable")
+                    ax.set_ylabel("Error Value")
+                    ax.set_xlabel("Variable")
+                    ax.legend(title="Metric")
+                    plt.xticks(rotation=45)
+                    plt.tight_layout()
+
+                    for p in ax.patches:
+                        height = p.get_height()
+                        if height > 0.01:  
+                            ax.annotate(f'{height:.3f}',
+                                        (p.get_x() + p.get_width() / 2, height),
+                                        ha='center', va='bottom',
+                                        fontsize=9, color='black',
+                                        xytext=(0, 3), textcoords='offset points')
+
+                    st.pyplot(fig)
+
+                def calculate_wqi(df, parameters):
+                    weights = {
+                        'pH': 0.15,
+                        'Dissolved Oxygen': 0.25,
+                        'Nitrite': 0.10,
+                        'Nitrate': 0.10,
+                        'Ammonia': 0.15,
+                        'Phosphate': 0.10,
+                        'Surface Temp': 0.05,
+                        'Middle Temp': 0.05,
+                        'Bottom Temp': 0.05,
+                    }
+
+                    missing_params = [param for param in parameters if param not in df.columns]
+                    if missing_params:
+                        st.error(f"Missing parameters in DataFrame: {missing_params}")
+                        return pd.Series([None] * len(df))
+
+                    weighted_values = df[parameters].apply(lambda x: x * weights[x.name], axis=0)
+                    return weighted_values.sum(axis=1)
+
+                def classify_water_quality(wqi):
+                    if wqi >= 90:
+                        return 'Excellent'
+                    elif wqi >= 70:
+                        return 'Good'
+                    elif wqi >= 50:
+                        return 'Fair'
+                    elif wqi >= 25:
+                        return 'Poor'
+                    else:
+                        return 'Very Poor'
+
+                st.markdown("""
+                    <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0;">Water Quality Index & Classification for Predictions</h3>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                # Parameters used in WQI
+                wqi_params = ['pH', 'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia',
+                            'Phosphate', 'Surface Temp', 'Middle Temp', 'Bottom Temp']
+
+                # Calculate WQI from descaled predictions
+                descaled_df['WQI'] = calculate_wqi(descaled_df, wqi_params)
+                descaled_df['Water Quality'] = descaled_df['WQI'].apply(classify_water_quality)
+
+                # Format numeric columns before displaying
+                def format_numeric_columns(df):
+                    for col in df.select_dtypes(include=['float64', 'int64']).columns:
+                        df[col] = df[col].apply(lambda x: f"{x:.2f}")
+                    return df
+
+                # Apply formatting
+                formatted_df = format_numeric_columns(descaled_df)
+
+                w1, w2 = st.columns([1.1, 0.9])
+                with w1:
+                    st.dataframe(formatted_df[['WQI', 'Water Quality']], height=500)
+                with w2:
+                    st.markdown("""
+                        <div style="background-color: white; color: black; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                            <h3 style="margin: 0;">Recommendations for Very Poor Water Quality</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    with st.expander("Monitor Regularly"):
+                        st.write("Check water quality often, especially for pH, oxygen, temperature, and pollutants from the volcano.")
+
+                    with st.expander("Improve Wastewater Treatment"):
+                        st.write("Make sure nearby homes and factories clean their water before releasing it into the lake.")
+
+                    with st.expander("Plant Vegetation"):
+                        st.write("Add trees and plants along the lake’s edge to stop erosion and filter dirty water.")
+
+                    with st.expander("Add Helpful Fish"):
+                        st.write("Protect or introduce native fish that eat algae to keep the water balanced.")
+
+                    with st.expander("Use Aerators"):
+                        st.write("Add machines that increase oxygen in the water to stop harmful algae.")
+
+                    with st.expander("Educate the Community"):
+                        st.write("Teach locals how to protect the lake and why it matters.")
+
+                    with st.expander("Enforce Rules"):
+                        st.write("Make sure pollution and land-use laws are followed around the lake.")
