@@ -33,10 +33,17 @@ styles = {
         "font-weight": "bold",
     }
 }
+options = {
+    "show_menu": False,
+    "show_sidebar": False,
+}
+
 page = st_navbar(
     pages,
     logo_path=logo_path,
+    urls=urls,
     styles=styles,
+    options=options,
 )
 
 functions = {
