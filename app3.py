@@ -8,10 +8,9 @@ st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide"
 if "page" not in st.session_state:
     st.session_state.page = "Dashboard"
 
-# Custom HTML/CSS NAVBAR
-st.markdown("""
+st.markdown(f"""
 <style>
-.navbar {
+.navbar {{
     background-color: #406606;
     display: flex;
     justify-content: space-between;
@@ -21,29 +20,29 @@ st.markdown("""
     top: 0;
     width: 100%;
     z-index: 9999;
-}
-.navbar-left {
+}}
+.navbar-left {{
     display: flex;
     align-items: center;
-}
-.navbar-left img {
+}}
+.navbar-left img {{
     height: 45px;
     margin-right: 15px;
-}
-.navbar a {
+}}
+.navbar a {{
     color: white;
     text-decoration: none;
     font-size: 18px;
     font-weight: bold;
     margin-left: 30px;
-}
-.navbar a.active {
+}}
+.navbar a.active {{
     color: #f8cc63;
     border-bottom: 3px solid #f8cc63;
-}
-.navbar a:hover {
+}}
+.navbar a:hover {{
     color: #f8cc63;
-}
+}}
 </style>
 
 <div class="navbar">
@@ -52,15 +51,13 @@ st.markdown("""
         <span style="font-size: 22px; color: white; font-weight: bold;">LaWatch</span>
     </div>
     <div>
-        <a href="/?page=Dashboard" class="{dashboard_class}">Dashboard</a>
-        <a href="/?page=Recommendations" class="{rec_class}">Recommendations</a>
+        <a href="/?page=Dashboard" class="{ 'active' if st.session_state.page == 'Dashboard' else '' }">Dashboard</a>
+        <a href="/?page=Recommendations" class="{ 'active' if st.session_state.page == 'Recommendations' else '' }">Recommendations</a>
     </div>
 </div>
 <br><br><br><br><br>
-""".format(
-    dashboard_class="active" if st.session_state.page == "Dashboard" else "",
-    rec_class="active" if st.session_state.page == "Recommendations" else "",
-), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
+
 
 # Query param handler
 page = st.query_params.get("page", st.session_state.page)
