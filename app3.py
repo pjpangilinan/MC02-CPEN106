@@ -19,12 +19,12 @@ styles = {
     },
     "img": {
         "height": "4.5rem",
-        "padding-right": "3rem",
+        "padding-right": "10rem",
     },
     "span": {
         "color": "white",
         "font-size": "1.2rem",
-        "padding": "12px 20px",
+        #"padding": "12px 20px",
         "font-weight": "bold",
     },
     "active": {
