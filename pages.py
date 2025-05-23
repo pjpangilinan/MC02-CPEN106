@@ -56,7 +56,7 @@ def show_home():
             encoded = base64.b64encode(img_file.read()).decode()
         return f"data:image/png;base64,{encoded}"
 
-    image_data = photo_path
+    image_data = get_base64_image("lake.png")
 
     st.markdown(f"""
     <style>
