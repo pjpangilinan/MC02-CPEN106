@@ -66,14 +66,6 @@ st.markdown(
         z-index: 9999;
     }
 
-    body {
-        padding: 0;
-    }
-
-    header[data-testid="stHeader"] {
-        padding: 0;
-        border-top: none;
-    }
     </style>
     <div class="nav-bottom-line"></div>
     """,
