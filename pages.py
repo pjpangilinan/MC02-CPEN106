@@ -292,6 +292,8 @@ def show_dashboard():
 
     df_scaled = df_new.copy()
 
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
     # Main UI
     tab1, tab2 = st.tabs([
         "Exploratory Data Analysis",
