@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from streamlit_community_navigation_bar import st_navbar
+from streamlit_navigation_bar import st_navbar
 import pages as pg
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
