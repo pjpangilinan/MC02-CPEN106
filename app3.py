@@ -6,14 +6,14 @@ import pages as pg
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
 
-pages = ["Dashboard", "Recommendations"]
+pages = ["Home", "Dashboard", "Recommendations"]
 
 styles = {
     "nav": {
         "background-color": "#3b6203",
         "height": "6rem",
         "display": "flex",
-        "align-items": "center",
+        "align-items": "right",
         "justify-content": "space-between",
     },
     "img": {
