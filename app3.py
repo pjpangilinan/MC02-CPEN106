@@ -15,7 +15,6 @@ styles = {
         "display": "flex",
         "align-items": "center",
         "justify-content": "space-between",
-        "margin-bottom": "0",
     },
     "img": {
         "height": "4.5rem",
