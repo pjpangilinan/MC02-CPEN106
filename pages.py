@@ -600,7 +600,7 @@ def show_dashboard():
 
         st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
-     with tab2:
+    with tab2:
         mode = st.selectbox("Select Prediction Mode", [
             "Water Quality Prediction & Model Comparison",
             "Time Based Prediction & WQI Calculation"
