@@ -6,7 +6,7 @@ import pages as pg
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
 
-pages = ["Dashboard", "Recommendations"]
+pages = ["Home", "Dashboard", "Recommendations"]
 parent_dir = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(parent_dir, "lawatch.svg")
 
