@@ -12,9 +12,9 @@ styles = {
     "nav": {
         "background-color": "#3b6203",
         "height": "6rem",
-        #"display": "flex",
+        "display": "flex",
         "align-items": "center",
-        #"justify-content": "space-between",
+        "justify-content": "space-between",
         "margin-bottom": "0",
     },
     "img": {
@@ -35,7 +35,6 @@ styles = {
 page = st_navbar(
     pages,
     logo_path="lawatch.svg",
-    styles=styles,
 )
 
 functions = {
