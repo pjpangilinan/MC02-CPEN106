@@ -37,7 +37,7 @@ def show_home():
 
         st.markdown(
             '<div style="text-align: center; margin-top: -10px; margin-bottom: 10px">'
-            '<a href="https://example.com" target="_blank" style="font-size:18px; font-weight:bold; color: #D3D3D3; text-decoration:none;">LAWATCH</a>'
+            '<a href="https://github.com/pjpangilinan/MC02-CPEN106/blob/main/lawatch.svg" target="_blank" style="font-size:18px; font-weight:bold; color: #D3D3D3; text-decoration:none;">LAWATCH</a>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -46,7 +46,7 @@ def show_home():
 
         st.markdown(
             '<div style="text-align: center; margin-top: -10px;">'
-            '<a href="https://example.com/photo" target="_blank" style="font-size:18px; font-weight:bold; color: #D3D3D3; text-decoration:none;">Lawatch Whole Background</a>'
+            '<a href="https://github.com/pjpangilinan/MC02-CPEN106/blob/main/lake.png" target="_blank" style="font-size:18px; font-weight:bold; color: #D3D3D3; text-decoration:none;">Lawatch Whole Background</a>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -292,7 +292,21 @@ def show_dashboard():
 
     df_scaled = df_new.copy()
 
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    dark_colors = [
+        '#1f77b4',  # muted blue
+        '#ff7f0e',  # orange
+        '#2ca02c',  # green
+        '#d62728',  # red
+        '#9467bd',  # purple
+        '#8c564b',  # brown
+        '#e377c2',  # pink
+        '#7f7f7f',  # gray
+        '#bcbd22',  # lime
+        '#17becf',  # cyan
+        '#f5b041',  # gold
+        '#5dade2'   # light blue
+    ]
+
 
     # Main UI
     tab1, tab2 = st.tabs([
@@ -389,7 +403,7 @@ def show_dashboard():
                             x=param,
                             nbins=40,
                             title=param,
-                            color_discrete_sequence=['skyblue'],
+                            color_discrete_sequence=[dark_colors[idx % len(dark_colors)]],
                             opacity=0.75
                         )
                         fig.update_layout(
@@ -425,7 +439,7 @@ def show_dashboard():
                     y=param,
                     title=param,
                     points="outliers",
-                    color_discrete_sequence=["lightgreen"]
+                    color_discrete_sequence=[dark_colors[idx % len(dark_colors)]]
                 )
                 fig.update_layout(
                     yaxis_title=param,
@@ -460,7 +474,8 @@ def show_dashboard():
                 title=" "
             )
 
-            for trace in fig_wqi_line.data:
+            for i, trace in enumerate(fig_wqi_line.data):
+                trace.line.color = dark_colors[i % len(dark_colors)]
                 if trace.name != "All Sites":
                     trace.visible = 'legendonly'
 
@@ -512,24 +527,26 @@ def show_dashboard():
                     numeric_columns,
                     index=numeric_columns.index("Dissolved Oxygen")  
             )
-                
-            fig_scatter = px.strip(df_new, x=x_axis, y=y_axis, title=" ") if x_axis in categorical_columns else px.scatter(
-                df_new,
-                x=x_axis,
-                y=y_axis,
-                opacity=0.7,
-                title=f" "
-            )
+    
+            fig_scatter = px.strip(
+                    df_new,
+                    x=x_axis,
+                    y=y_axis,
+
+                    title=" ",
+                )
 
             fig_scatter.update_layout(
                 xaxis_title=x_axis,
                 yaxis_title=y_axis,
                 title_x=0.5,
                 height=500,
-                margin=dict(t=30, b=30)
+                margin=dict(t=30, b=30),
+                showlegend=False 
             )
 
             st.plotly_chart(fig_scatter, use_container_width=True)
+
 
         st.markdown("""
             <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; ustify-content: center; border-radius: 8px; text-align: center;">
@@ -554,8 +571,9 @@ def show_dashboard():
                 line_shape="spline"
         )
 
-        for trace in fig_line_all.data:
+        for i, trace in enumerate(fig_line_all.data):
             trace.visible = True if trace.name == "pH" else "legendonly"
+            trace.line.color = dark_colors[i % len(dark_colors)]
 
         fig_line_all.update_layout(
                 margin=dict(t=20, b=20),
