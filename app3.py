@@ -34,6 +34,7 @@ styles = {
 }
 page = st_navbar(
     pages,
+    logo_path="lawatch.ico"
     styles=styles,
 )
 
