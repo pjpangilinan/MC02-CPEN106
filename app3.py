@@ -39,6 +39,7 @@ page = st_navbar(
 )
 
 functions = {
+    "home": pg.show_home,
     "Home": pg.show_home,
     "Dashboard": pg.show_dashboard,
     "Recommendations": pg.show_rec,
