@@ -6,7 +6,7 @@ import pages as pg
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
 
-pages = ["Homeㅤ", "Dashboard", "Recommendations"]
+pages = ["ㅤHomeㅤ", "ㅤDashboardㅤ", "ㅤRecommendationsㅤ"]
 
 styles = {
     "nav": {
@@ -40,9 +40,9 @@ page = st_navbar(
 
 functions = {
     "Home": pg.show_home,
-    "Homeㅤ": pg.show_home,
-    "Dashboard": pg.show_dashboard,
-    "Recommendations": pg.show_rec,
+    "ㅤHomeㅤ": pg.show_home,
+    "ㅤDashboardㅤ": pg.show_dashboard,
+    "ㅤRecommendationsㅤ": pg.show_rec,
 }
 
 st.markdown(
