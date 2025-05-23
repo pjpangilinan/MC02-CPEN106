@@ -15,10 +15,11 @@ styles = {
         "display": "flex",
         "align-items": "right",
         "justify-content": "space-between",
+        "margin-bottom": "0",
     },
     "img": {
         "height": "4.5rem",
-        "padding-left": "3rem,
+        "padding-right": "3rem",
     },
     "span": {
         "color": "white",
