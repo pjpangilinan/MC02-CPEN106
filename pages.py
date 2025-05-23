@@ -81,7 +81,7 @@ def show_home():
 
 def show_rec():
     st.markdown("""
-        <div style="margin-top: 1rem; background-color: #1a4723; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+        <div style="margin-top: 2rem; background-color: #1a4723; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
             <h3 style="margin: 0;">Recommendations for Very Poor Water Quality</h3>
         </div>
     """, unsafe_allow_html=True)
