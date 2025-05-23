@@ -24,7 +24,7 @@ styles = {
     "span": {
         "color": "white",
         "font-size": "1.2rem",
-        #"padding": "12px 20px",
+        "padding": "12px 20px",
         "font-weight": "bold",
     },
     "active": {
@@ -43,8 +43,8 @@ page = st_navbar(
 functions = {
     "Home": pg.show_home,
     "ㅤHomeㅤ": pg.show_home,
-    "ㅤDashboardㅤ": pg.show_dashboard,
-    "ㅤRecommendationsㅤ": pg.show_rec,
+    "Dashboard": pg.show_dashboard,
+    "Recommendations": pg.show_rec,
 }
 
 st.markdown(
