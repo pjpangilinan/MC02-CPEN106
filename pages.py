@@ -11,7 +11,8 @@ from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.impute import KNNImputer
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM
+from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, LSTM, Dropout
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 def show_home():
     parent_dir = os.path.dirname(os.path.abspath(__file__))
@@ -599,7 +600,7 @@ def show_dashboard():
 
         st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
-    with tab2:
+     with tab2:
         mode = st.selectbox("Select Prediction Mode", [
             "Water Quality Prediction & Model Comparison",
             "Time Based Prediction & WQI Calculation"
@@ -672,18 +673,24 @@ def show_dashboard():
 
             def build_model(model_type, input_shape):
                 model = Sequential()
+
                 if model_type == "CNN":
                     model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
                     model.add(MaxPooling1D(pool_size=2))
                     model.add(Flatten())
+
                 elif model_type == "LSTM":
                     model.add(LSTM(64, input_shape=input_shape))
+                
                 elif model_type == "CNN-LSTM":
                     model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
                     model.add(MaxPooling1D(pool_size=2))
-                    model.add(LSTM(64))
+                    model.add(LSTM(64))  
+
+                model.add(Dropout(0.2)) 
                 model.add(Dense(128, activation='relu'))
-                model.add(Dense(1, activation='linear'))
+                model.add(Dense(1, activation='linear'))  
+
                 model.compile(optimizer='adam', loss='mse')
                 return model
 
@@ -705,8 +712,13 @@ def show_dashboard():
                         <h3 style="color: white;">Predicting {selected_param}</h3>
                     </div>
                 """, unsafe_allow_html=True)
+                callbacks = [
+                    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),
+                    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
+                ]
+
                 model = build_model(model_type, (X_train.shape[1], 1))
-                model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_valid, y_valid), verbose=0)
+                model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_valid, y_valid), callbacks=callbacks, verbose=1)
                 y_pred = model.predict(X_test).flatten()
                 mae = mean_absolute_error(y_test, y_pred)
                 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
@@ -764,13 +776,19 @@ def show_dashboard():
             st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
         elif mode == "Time Based Prediction & WQI Calculation":
+            callbacks = [
+                EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),
+                ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
+            ]
+
             df_unstandardize = df.copy()
 
             def build_model(input_shape, output_dim):
                 model = Sequential()
                 model.add(Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape))
                 model.add(MaxPooling1D(pool_size=2))
-                model.add(LSTM(64))
+                model.add(LSTM(64))  
+                model.add(Dropout(0.2)) 
                 model.add(Dense(128, activation='relu'))
                 model.add(Dense(output_dim, activation='linear'))
                 model.compile(optimizer='adam', loss='mse')
@@ -899,7 +917,7 @@ def show_dashboard():
 
                 if st.button("Start Prediction"):
                     model = build_model(input_shape=(look_back, num_features), output_dim=len(target_vars))
-                    model.fit(X, Y, epochs=20, batch_size=32, verbose=0)
+                    model.fit(X, Y, epochs=50, batch_size=32, callbacks=callbacks, verbose=1)
 
                     # Prediction loop
                     last_data = data_used[target_vars].values[-look_back:]
@@ -1069,3 +1087,4 @@ def show_dashboard():
                         st.plotly_chart(fig_line, use_container_width=True)
 
                     st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+                    
