@@ -934,74 +934,87 @@ def show_dashboard():
                     scaler.fit(df_unstandardize[target_vars])
                     descaled_df = pd.DataFrame(scaler.inverse_transform(predictions_df),
                                             columns=target_vars)
+                    
+                    if prediction_type == "Weekly":
+                        start_date = pd.to_datetime("2024-01-01")
+                        date_range = pd.date_range(start=start_date, periods=future_periods, freq='W-MON')
+                    elif prediction_type == "Monthly":
+                        start_date = pd.to_datetime("2024-01-01")
+                        date_range = pd.date_range(start=start_date, periods=future_periods, freq='MS')
+                    else:  
+                        start_date = pd.to_datetime("2024-01-01")
+                        date_range = pd.date_range(start=start_date, periods=future_periods, freq='YS')
 
-                    c1, c2 = st.columns([0.7, 1.3])
-                    with c1:
-                        if prediction_type == "Weekly":
-                            prediction_title = f"Predictions for the Next {future_periods} Weeks"
-                        elif prediction_type == "Monthly":
-                            prediction_title = f"Predictions for the Next {future_periods} Months"
-                        else:
-                            prediction_title = f"Predictions for the Next {future_periods} Years"
+                    table_df = descaled_df.copy()
+                    table_df["Date"] = date_range
+                    table_df["Date"] = table_df["Date"].dt.strftime('%Y-%m-%d')
+                    table_df = table_df[["Date"] + [col for col in table_df.columns if col != "Date"]]
 
-                        st.markdown(f"""
-                            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                                <h3 style="margin: 0;">{prediction_title}</h3>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        st.dataframe(descaled_df.style.format("{:.2f}"), height=400)
+                    if prediction_type == "Weekly":
+                        prediction_title = f"Predictions for the Next {future_periods} Weeks"
+                    elif prediction_type == "Monthly":
+                        prediction_title = f"Predictions for the Next {future_periods} Months"
+                    else:
+                        prediction_title = f"Predictions for the Next {future_periods} Years"
 
-                    with c2:
-                        st.markdown("""
-                            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                                <h3 style="margin: 0;">Model Performance (on Last Known Data)</h3>
-                            </div>
-                        """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                        <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                            <h3 style="margin: 0;">{prediction_title}</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.dataframe(table_df.style.format({col: "{:.2f}" for col in table_df.columns if col != "Date"}), height=400)
 
-                        metrics = []
-                        for column in predictions_df.columns:
-                            # Get actual and predicted values for the current column
-                            actual_values = Y[-future_periods:, predictions_df.columns.get_loc(column)]
-                            
-                            # Recreate predictions on the last `future_periods` input sequences
-                            test_inputs = X[-future_periods:]
-                            predicted_values = model.predict(test_inputs, verbose=0)[:, predictions_df.columns.get_loc(column)]
+                    st.markdown("""
+                        <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                            <h3 style="margin: 0;">Model Performance (on Last Known Data)</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                            # Calculate metrics
-                            rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
-                            mae = mean_absolute_error(actual_values, predicted_values)
-                            r2 = r2_score(actual_values, predicted_values)
+                    metrics = []
+                    for column in predictions_df.columns:
+                        # Get actual and predicted values for the current column
+                        actual_values = Y[-future_periods:, predictions_df.columns.get_loc(column)]
+                        
+                        # Recreate predictions on the last `future_periods` input sequences
+                        test_inputs = X[-future_periods:]
+                        predicted_values = model.predict(test_inputs, verbose=0)[:, predictions_df.columns.get_loc(column)]
 
-                            metrics.append((column, round(rmse, 4), round(mae, 4), round(r2, 2)))
+                        # Calculate metrics
+                        rmse = np.sqrt(mean_squared_error(actual_values, predicted_values))
+                        mae = mean_absolute_error(actual_values, predicted_values)
+                        r2 = r2_score(actual_values, predicted_values)
 
-                        metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE", "R2"])
-                        metrics_df['R2_clipped'] = metrics_df['R2'].apply(lambda x: max(0, x))
+                        metrics.append((column, round(rmse, 4), round(mae, 4), round(r2, 2)))
 
-                        metrics_long = pd.melt(metrics_df, id_vars='Variable',
-                                            value_vars=['RMSE', 'MAE', 'R2_clipped'],
-                                            var_name='Metric', value_name='Value')
-                        metrics_long['Metric'] = metrics_long['Metric'].replace('R2_clipped', 'R2')
+                    metrics_df = pd.DataFrame(metrics, columns=["Variable", "RMSE", "MAE", "R2"])
+                    metrics_df['R2_clipped'] = metrics_df['R2'].apply(lambda x: max(0, x))
 
-                        fig, ax = plt.subplots(figsize=(12, 6))
-                        sns.barplot(data=metrics_long, x='Variable', y='Value', hue='Metric', ax=ax)
+                    metrics_long = pd.melt(metrics_df, id_vars='Variable',
+                                        value_vars=['RMSE', 'MAE', 'R2_clipped'],
+                                        var_name='Metric', value_name='Value')
+                    metrics_long['Metric'] = metrics_long['Metric'].replace('R2_clipped', 'R2')
 
-                        ax.set_title("Model Performance Metrics (RMSE, MAE, R²) by Variable")
-                        ax.set_ylabel("Metric Value")
-                        ax.set_xlabel("Variable")
-                        ax.legend(title="Metric")
-                        plt.xticks(rotation=45)
-                        plt.tight_layout()
+                    fig = px.bar(
+                        metrics_long,
+                        x='Variable',
+                        y='Value',
+                        color='Metric',
+                        barmode='group',
+                        title='Negative R2 Score is not shown',
+                        labels={'Value': 'Metric Value', 'Variable': 'Variable'},
+                        height=400,
+                        text='Value'  
+                    )
 
-                        for p in ax.patches:
-                            height = p.get_height()
-                            if height > 0.01:
-                                ax.annotate(f'{height:.3f}',
-                                            (p.get_x() + p.get_width() / 2, height),
-                                            ha='center', va='bottom',
-                                            fontsize=8, color='black',
-                                            xytext=(0, 3), textcoords='offset points')
+                    fig.update_traces(textposition='inside') 
 
-                        st.pyplot(fig)
+                    fig.update_layout(
+                        legend_title_text='Metric',
+                        yaxis=dict(range=[0, max(metrics_long['Value'].max() * 1.1, 1)]),
+                        margin=dict(t=20, b=20)
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
 
                     def calculate_wqi(df, parameters):
                         weights = {
@@ -1048,6 +1061,7 @@ def show_dashboard():
 
                     # Calculate WQI from descaled predictions
                     descaled_df['WQI'] = calculate_wqi(descaled_df, wqi_params)
+                    table_df['WQI'] = calculate_wqi(table_df, wqi_params)
                     descaled_df['Water Quality'] = descaled_df['WQI'].apply(classify_water_quality)
 
                     # Format numeric columns before displaying
@@ -1076,14 +1090,29 @@ def show_dashboard():
                         descaled_df = descaled_df.reset_index(drop=True)
 
                         fig_line = px.line(
-                            descaled_df,
-                            x=descaled_df.index,
+                            table_df,
+                            x='Date',               # Use your actual date column name here
                             y='WQI',
-                            title='Water Quality Index Over Samples',
-                            labels={'x': 'Sample Number', 'WQI': 'Water Quality Index'},
+                            title='Water Quality Index Over Time',
+                            labels={'Date': 'Date', 'WQI': 'Water Quality Index'},
                             markers=True
                         )
-                        fig_line.update_layout(height=350)
+                        fig_line.update_layout(
+                            height=350,
+                            xaxis_title='Date',
+                            yaxis_title='Water Quality Index',
+                            xaxis=dict(
+                                rangeselector=dict(
+                                    buttons=list([
+                                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                                        dict(step="all")
+                                    ])
+                                ),
+                                rangeslider=dict(visible=True),
+                                type="date"
+                            )
+                        )
                         st.plotly_chart(fig_line, use_container_width=True)
 
                     st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
