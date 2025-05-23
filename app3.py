@@ -31,8 +31,9 @@ styles = {
         "font-weight": "bold",
     }
 }
+
 page = st_navbar(
-    #pages,
+    pages,
     logo_path="lawatch.svg",
     styles=styles
 )
