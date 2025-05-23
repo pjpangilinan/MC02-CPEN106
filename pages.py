@@ -403,7 +403,7 @@ def show_dashboard():
                             x=param,
                             nbins=40,
                             title=param,
-                            color_discrete_sequence=["teal"],
+                            color_discrete_sequence=[dark_colors[idx % len(dark_colors)]],
                             opacity=0.75
                         )
                         fig.update_layout(
