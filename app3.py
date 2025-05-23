@@ -5,8 +5,6 @@ import pages as pg
 
 st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
 
-st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
-
 page = st.sidebar.radio("Go to", ["Home", "Dashboard", "Recommendations"])
 
 functions = {
