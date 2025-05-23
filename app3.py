@@ -4,7 +4,7 @@ from streamlit_community_navigation_bar import st_navbar
 
 import pages as pg
 
-st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg")
 
 pages = ["Dashboard", "Recommendations"]
 
