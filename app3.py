@@ -4,7 +4,7 @@ from streamlit_community_navigation_bar import st_navbar
 
 import pages as pg
 
-st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg")
+st.set_page_config(page_title="Taal Lake Water Quality Dashboard", layout="wide", page_icon="lawatch.svg", initial_sidebar_state="collapsed")
 
 pages = ["Dashboard", "Recommendations"]
 
@@ -27,7 +27,7 @@ styles = {
         "font-weight": "bold",
     },
     "active": {
-        "color": "#f8cc63",  # gold-ish active color
+        "color": "#f8cc63",
         "text-decoration": "underline",
         "font-weight": "bold",
     }
