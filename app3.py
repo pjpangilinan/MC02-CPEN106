@@ -17,6 +17,9 @@ styles = {
         "justify-content": "space-between",
         "margin-bottom": "0",
     },
+    "img": {
+        "height": "4.5rem",
+    },
     "span": {
         "color": "white",
         "font-size": "1.2rem",
@@ -24,7 +27,7 @@ styles = {
         "font-weight": "bold",
     },
     "active": {
-        "color": "#f8cc63", 
+        "color": "#f8cc63",  # gold-ish active color
         "text-decoration": "underline",
         "font-weight": "bold",
     }
@@ -34,6 +37,11 @@ page = st_navbar(
     styles=styles,
 )
 
+functions = {
+    "Home": pg.show_home,
+    "Dashboard": pg.show_dashboard,
+    "Recommendations": pg.show_rec,
+}
 st.markdown(
     """
     <style>
@@ -72,3 +80,8 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+
+go_to = functions.get(page)
+if go_to:
+    go_to()
