@@ -18,6 +18,7 @@ styles = {
     },
     "img": {
         "height": "4.5rem",
+        "padding-left": "3rem,
     },
     "span": {
         "color": "white",
