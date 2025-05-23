@@ -29,7 +29,6 @@ styles = {
     },
     "active": {
         "color": "#f8cc63",
-        "text-decoration": "underline",
         "font-weight": "bold",
     }
 }
