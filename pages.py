@@ -868,34 +868,34 @@ def show_dashboard():
                 unsafe_allow_html=True
             )
 
-            col1, col2= st.columns(2)
+            target_vars = ['Surface Temp', 'Middle Temp', 'Bottom Temp', 'pH',
+                        'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia', 'Phosphate']
+            
+            col1, col2, col3 = st.columns(3)
 
             with col1:
                 prediction_type = st.radio("Select Time Granularity", ["Weekly", "Monthly", "Yearly"])
-            with col2:
+            with col3:
                 location = st.selectbox("Select Site", df_new['Site'].unique())
-
-            target_vars = ['Surface Temp', 'Middle Temp', 'Bottom Temp', 'pH',
-                        'Dissolved Oxygen', 'Nitrite', 'Nitrate', 'Ammonia', 'Phosphate']
-
-            if prediction_type == "Weekly":
-                future_periods = st.number_input("Weeks to Predict", min_value=1, max_value=104, value=52, step=1)
-                look_back = 52
-                X, Y, count, data_used = prepare_weekly_data(df_new, location, target_vars, look_back)
-            elif prediction_type == "Monthly":
-                future_periods = st.number_input("Months to Predict", min_value=1, max_value=36, value=12, step=1)
-                look_back = 12
-                X, Y, count, data_used = prepare_monthly_data(df_new, location, target_vars, look_back)
-            else: 
-                future_periods = st.number_input("Years to Predict", min_value=1, max_value=10, value=5, step=1)
-                look_back = 5
-                X, Y, count, data_used = prepare_yearly_data(df_new, location, target_vars, look_back)
+            with col2:
+                if prediction_type == "Weekly":
+                    future_periods = st.number_input("Weeks to Predict", min_value=1, max_value=104, value=52, step=1)
+                    look_back = 52
+                    X, Y, count, data_used = prepare_weekly_data(df_new, location, target_vars, look_back)
+                elif prediction_type == "Monthly":
+                    future_periods = st.number_input("Months to Predict", min_value=1, max_value=36, value=12, step=1)
+                    look_back = 12
+                    X, Y, count, data_used = prepare_monthly_data(df_new, location, target_vars, look_back)
+                else: 
+                    future_periods = st.number_input("Years to Predict", min_value=1, max_value=10, value=5, step=1)
+                    look_back = 5
+                    X, Y, count, data_used = prepare_yearly_data(df_new, location, target_vars, look_back)
+                st.write(f"Total usable records: {count}")
+                num_features = X.shape[2]
 
             if X is None or Y is None:
                 st.error("Data preparation failed due to insufficient data. Please check your data and site selection.")
             else:
-                st.write(f"Total usable records: {count}")
-                num_features = X.shape[2]
 
                 st.markdown("""
                 <style>
