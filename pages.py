@@ -548,7 +548,6 @@ def show_dashboard():
 
             st.plotly_chart(fig_scatter, use_container_width=True)
 
-
         st.markdown("""
             <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; ustify-content: center; border-radius: 8px; text-align: center;">
                 <h3 style="margin: 0;">Line Charts for Time-Series Data</h3>
@@ -559,42 +558,54 @@ def show_dashboard():
         df_plot['Date'] = pd.to_datetime(df_plot['Date'])
         df_plot = df_plot.sort_values('Date')
 
+        site_options = ["All Sites"] + sorted(df_plot["Site"].unique())
+        selected_site = st.selectbox("Select Site to View", site_options, key="time-select")
+
+        if selected_site != "All Sites":
+            df_plot = df_plot[df_plot["Site"] == selected_site]
+
         numeric_columns = df_plot.select_dtypes(include=np.number).columns.tolist()
 
-        df_long = df_plot.melt(id_vars=["Date"], value_vars=numeric_columns, var_name="Parameter", value_name="Value")
+        df_long = df_plot.melt(
+            id_vars=["Date"],
+            value_vars=numeric_columns,
+            var_name="Parameter",
+            value_name="Value"
+        )
 
         fig_line_all = px.line(
-                df_long,
-                x="Date",
-                y="Value",
-                color="Parameter",
-                title=" ",
-                line_shape="spline"
+            df_long,
+            x="Date",
+            y="Value",
+            color="Parameter",
+            title=f" ",
+            line_shape="spline"
         )
 
         for i, trace in enumerate(fig_line_all.data):
             trace.visible = True if trace.name == "pH" else "legendonly"
             trace.line.color = dark_colors[i % len(dark_colors)]
 
+        # Layout and range controls
         fig_line_all.update_layout(
-                margin=dict(t=20, b=20),
-                xaxis_title="Date",
-                yaxis_title="Value",
-                title_x=0.5,
-                height=550,
-                xaxis=dict(
-                    rangeselector=dict(
-                        buttons=list([
-                            dict(count=1, label="1m", step="month", stepmode="backward"),
-                            dict(count=6, label="6m", step="month", stepmode="backward"),
-                            dict(count=1, label="1y", step="year", stepmode="backward"),
-                            dict(step="all")
-                        ])
-                    ),
-                    rangeslider=dict(visible=True),
-                    type="date"
-                )
+            margin=dict(t=20, b=20),
+            xaxis_title="Date",
+            yaxis_title="Value",
+            title_x=0.5,
+            height=550,
+            xaxis=dict(
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all")
+                    ])
+                ),
+                rangeslider=dict(visible=True),
+                type="date"
             )
+        )
 
         st.plotly_chart(fig_line_all, use_container_width=True, key="line_charts")
 
