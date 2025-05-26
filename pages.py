@@ -247,8 +247,6 @@ def show_dashboard():
     </style>
     """, unsafe_allow_html=True)
 
-
-
     # Load data
     df = pd.read_csv("Spreadmeat_WQxVAxMF.csv")
 
@@ -311,11 +309,11 @@ def show_dashboard():
 
     # Main UI
     tab1, tab2 = st.tabs([
-        "Exploratory Data Analysis",
-        "Water Quality Prediction"
+        "Water Quality Prediction",
+        "Exploratory Data Analysis"
     ])
 
-    with tab1:
+    with tab2:
         col1, col2 = st.columns(2)
 
         with col1:
@@ -611,7 +609,7 @@ def show_dashboard():
 
         st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
-    with tab2:
+    with tab1:
         mode = st.selectbox("Select Prediction Mode", [
             "Water Quality Prediction & Model Comparison",
             "Time Based Prediction & WQI Calculation"
