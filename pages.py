@@ -1084,7 +1084,7 @@ def show_dashboard():
 
                     w1, w2 = st.columns([1.1, 0.9])
                     with w1:
-                        st.dataframe(formatted_df[['WQI', 'Water Quality']], height=700)
+                        st.dataframe(formatted_df[['WQI', 'Water Quality']], height=350)
                     with w2:
                         fig_wqi_hist = px.histogram(
                             descaled_df,
@@ -1098,31 +1098,44 @@ def show_dashboard():
 
                         descaled_df = descaled_df.reset_index(drop=True)
 
-                        fig_line = px.line(
-                            table_df,
-                            x='Date',               # Use your actual date column name here
-                            y='WQI',
-                            title='Water Quality Index Over Time',
-                            labels={'Date': 'Date', 'WQI': 'Water Quality Index'},
-                            markers=True
+                    table_df["Date"] = pd.to_datetime(table_df["Date"])
+
+                    df_long = table_df.melt(id_vars=["Date"], var_name="Parameter", value_name="Value")
+
+                    fig = px.line(
+                        df_long,
+                        x="Date",
+                        y="Value",
+                        color="Parameter",
+                        title="Predicted Water Quality Parameters Over Time",
+                        markers=True
+                    )
+
+                    fig.update_layout(
+                        height=500,
+                        xaxis_title="Date",
+                        yaxis_title="Value",
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        ),
+                        xaxis=dict(
+                            rangeselector=dict(
+                                buttons=list([
+                                    dict(count=1, label="1m", step="month", stepmode="backward"),
+                                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                                    dict(step="all")
+                                ])
+                            ),
+                            rangeslider=dict(visible=True),
+                            type="date"
                         )
-                        fig_line.update_layout(
-                            height=350,
-                            xaxis_title='Date',
-                            yaxis_title='Water Quality Index',
-                            xaxis=dict(
-                                rangeselector=dict(
-                                    buttons=list([
-                                        dict(count=1, label="1m", step="month", stepmode="backward"),
-                                        dict(count=6, label="6m", step="month", stepmode="backward"),
-                                        dict(step="all")
-                                    ])
-                                ),
-                                rangeslider=dict(visible=True),
-                                type="date"
-                            )
-                        )
-                        st.plotly_chart(fig_line, use_container_width=True)
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
 
                     st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
                     
