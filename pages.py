@@ -306,308 +306,10 @@ def show_dashboard():
         '#5dade2'   # light blue
     ]
 
-
-    # Main UI
     tab1, tab2 = st.tabs([
         "Water Quality Prediction",
         "Exploratory Data Analysis"
     ])
-
-    with tab2:
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.subheader("📂 Dataset Overview")
-
-            num_rows = st.slider("Select number of rows to view", min_value=5, max_value=100, value=10)
-
-            columns_to_view = st.multiselect(
-                "Select columns to display",
-                options=df_eda.columns.tolist(),
-                default=df_eda.columns.tolist()[:5]  
-            )
-
-            st.dataframe(df_eda[columns_to_view].head(num_rows), height=400)
-
-            with st.expander("📊 Summary Statistics", expanded=False):
-                st.write(df_eda.describe().T.style.format("{:.2f}"))
-
-        with col2:
-            st.subheader("🔥 Correlation Heatmap")
-            df_filtered = df_eda.select_dtypes(include=np.number)
-            correlation_matrix = df_filtered.corr()
-        
-            fig_corr = px.imshow(
-                correlation_matrix,
-                text_auto=".2f",        
-                color_continuous_scale="RdBu_r",  
-                title=" ",
-                aspect="auto"
-            )
-
-            fig_corr.update_layout(
-                title_x=0.5,
-                height=590,
-                margin=dict(t=10, b=10)
-            )
-
-            # Display in Streamlit
-            st.plotly_chart(fig_corr, use_container_width=True)
-
-            with st.expander("📘 Correlation Analysis Summary", expanded=False):
-                st.markdown("""
-                <ul>
-                <li>The analysis shows that most parameters have low negative correlations, while a few show strong relationships.</li>
-                <li><strong>Water Temperatures</strong> strongly correlate with <strong>Air Temperature</strong>, indicating the impact of atmospheric conditions, especially on surface waters.</li>
-                <li><strong>Ammonia</strong> and <strong>Phosphate</strong> levels rise together, likely due to pollution or biological processes.</li>
-                <li><strong>pH</strong>, <strong>Dissolved Oxygen</strong>, <strong>Phosphate</strong>, and <strong>CO₂</strong> show declining trends over time, possibly linked to acidification, warming, or reduced biological activity.</li>
-                <li>Moderate correlations also exist between:
-                    <ul>
-                    <li><strong>pH</strong> & <strong>Dissolved Oxygen</strong></li>
-                    <li><strong>Sulfide</strong> & <strong>Ammonia</strong></li>
-                    <li><strong>CO₂</strong> & <strong>Water Temperatures</strong> / <strong>Dissolved Oxygen</strong></li>
-                    </ul>
-                </li>
-                </ul>
-                """, unsafe_allow_html=True)
-
-        st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                <h3 style="margin: 0;">Parameter Distributions</h3>
-            </div>
-        """, unsafe_allow_html=True)
-
-        site_options = ["All Sites"] + sorted(df_eda['Site'].unique())
-        selected_site = st.selectbox("Select Site", site_options, key="site_hist_all")
-
-        df_filtered = df_eda.copy()
-        if selected_site != "All Sites":
-            df_filtered = df_filtered[df_filtered['Site'] == selected_site]
-
-        # Select numeric columns
-        numeric_columns = df_filtered.select_dtypes(include=['float64', 'int64']).columns.tolist()
-
-        # Plot histograms in a 4x3 layout
-        rows = 3
-        cols = 4
-        for i in range(rows):
-            col_group = st.columns(cols)
-            for j in range(cols):
-                idx = i * cols + j
-                if idx < len(numeric_columns):
-                    with col_group[j]:
-                        param = numeric_columns[idx]
-                        fig = px.histogram(
-                            df_filtered,
-                            x=param,
-                            nbins=40,
-                            title=param,
-                            color_discrete_sequence=[dark_colors[idx % len(dark_colors)]],
-                            opacity=0.75
-                        )
-                        fig.update_layout(
-                            margin=dict(t=30, b=30),
-                            height=300,
-                            bargap=0.1
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-
-        st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                <h3 style="margin: 0;">Parameter Box Plots</h3>
-            </div>
-        """, unsafe_allow_html=True)
-
-        sites = ["All Sites"] + sorted(df_eda['Site'].dropna().unique())
-        selected_site = st.selectbox("Select Site", sites, key="site_box_all")
-
-        df_filtered = df_eda if selected_site == "All Sites" else df_eda[df_eda['Site'] == selected_site]
-        numeric_columns = df_filtered.select_dtypes(include=['float64', 'int64']).columns.tolist()
-
-        rows, cols = 3, 4
-        for i in range(rows):
-            col_group = st.columns(cols)
-            for j in range(cols):
-                idx = i * cols + j
-                if idx >= len(numeric_columns):
-                    break
-                param = numeric_columns[idx]
-
-                fig = px.box(
-                    df_filtered,
-                    y=param,
-                    title=param,
-                    points="outliers",
-                    color_discrete_sequence=[dark_colors[idx % len(dark_colors)]]
-                )
-                fig.update_layout(
-                    yaxis_title=param,
-                    title_x=0.5,
-                    height=350,
-                    margin=dict(t=20, b=20)
-                )
-                col_group[j].plotly_chart(fig, use_container_width=True)
-
-        s1, s2 = st.columns(2)
-        with s1:
-            st.markdown("""
-                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0;">Water Quality Index Over Time</h3>
-                </div>
-            """, unsafe_allow_html=True)
-
-            wqi = pd.read_csv("wqi.csv")
-            wqi['Date'] = pd.to_datetime(wqi['Date'])
-
-            avg_wqi = wqi.groupby('Date', as_index=False)['WQI'].mean()
-            avg_wqi['Site'] = 'All Sites'
-
-            combined_wqi = pd.concat([avg_wqi, wqi], ignore_index=True)
-
-            fig_wqi_line = px.line(
-                combined_wqi,
-                x='Date',
-                y='WQI',
-                color='Site',
-                line_shape="spline",
-                title=" "
-            )
-
-            for i, trace in enumerate(fig_wqi_line.data):
-                trace.line.color = dark_colors[i % len(dark_colors)]
-                if trace.name != "All Sites":
-                    trace.visible = 'legendonly'
-
-            fig_wqi_line.update_layout(
-                margin=dict(t=20, b=20),
-                xaxis_title="Date",
-                yaxis_title="WQI",
-                title_x=0.5,
-                height=600,
-                xaxis=dict(
-                    rangeselector=dict(
-                        buttons=list([
-                            dict(count=1, label="1m", step="month", stepmode="backward"),
-                            dict(count=6, label="6m", step="month", stepmode="backward"),
-                            dict(count=1, label="1y", step="year", stepmode="backward"),
-                            dict(step="all")
-                        ])
-                    ),
-                    rangeslider=dict(visible=True),
-                    type="date"
-                )
-            )
-
-            st.plotly_chart(fig_wqi_line, use_container_width=True, key="wqi")
-
-
-        with s2:
-            st.markdown("""
-                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0;">Scatter Plots for Parameter Relationships</h3>
-                </div>
-            """, unsafe_allow_html=True)
-
-            # Select columns for X and Y
-            numeric_columns = df_new.select_dtypes(include=['float64', 'int64']).columns.tolist()
-            categorical_columns = ['Weather Condition', 'Wind Direction']
-            x, y = st.columns(2)
-
-            with x:
-                x_axis = st.selectbox(
-                    "Select X-axis parameter",
-                    categorical_columns + numeric_columns,
-                    index=(categorical_columns + numeric_columns).index("pH") 
-                )
-
-            with y:
-                y_axis = st.selectbox(
-                    "Select Y-axis parameter",
-                    numeric_columns,
-                    index=numeric_columns.index("Dissolved Oxygen")  
-            )
-    
-            fig_scatter = px.strip(
-                    df_new,
-                    x=x_axis,
-                    y=y_axis,
-
-                    title=" ",
-                )
-
-            fig_scatter.update_layout(
-                xaxis_title=x_axis,
-                yaxis_title=y_axis,
-                title_x=0.5,
-                height=500,
-                margin=dict(t=30, b=30),
-                showlegend=False 
-            )
-
-            st.plotly_chart(fig_scatter, use_container_width=True)
-
-        st.markdown("""
-            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; ustify-content: center; border-radius: 8px; text-align: center;">
-                <h3 style="margin: 0;">Line Charts for Time-Series Data</h3>
-            </div>
-        """, unsafe_allow_html=True)
-
-        df_plot = df_eda.copy()
-        df_plot['Date'] = pd.to_datetime(df_plot['Date'])
-        df_plot = df_plot.sort_values('Date')
-
-        site_options = ["All Sites"] + sorted(df_plot["Site"].unique())
-        selected_site = st.selectbox("Select Site to View", site_options, key="time-select")
-
-        if selected_site != "All Sites":
-            df_plot = df_plot[df_plot["Site"] == selected_site]
-
-        numeric_columns = df_plot.select_dtypes(include=np.number).columns.tolist()
-
-        df_long = df_plot.melt(
-            id_vars=["Date"],
-            value_vars=numeric_columns,
-            var_name="Parameter",
-            value_name="Value"
-        )
-
-        fig_line_all = px.line(
-            df_long,
-            x="Date",
-            y="Value",
-            color="Parameter",
-            title=f" ",
-            line_shape="spline"
-        )
-
-        for i, trace in enumerate(fig_line_all.data):
-            trace.visible = True if trace.name == "pH" else "legendonly"
-            trace.line.color = dark_colors[i % len(dark_colors)]
-
-        # Layout and range controls
-        fig_line_all.update_layout(
-            margin=dict(t=20, b=20),
-            xaxis_title="Date",
-            yaxis_title="Value",
-            title_x=0.5,
-            height=550,
-            xaxis=dict(
-                rangeselector=dict(
-                    buttons=list([
-                        dict(count=1, label="1m", step="month", stepmode="backward"),
-                        dict(count=6, label="6m", step="month", stepmode="backward"),
-                        dict(count=1, label="1y", step="year", stepmode="backward"),
-                        dict(step="all")
-                    ])
-                ),
-                rangeslider=dict(visible=True),
-                type="date"
-            )
-        )
-
-        st.plotly_chart(fig_line_all, use_container_width=True, key="line_charts")
-
-        st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
     with tab1:
         mode = st.selectbox("Select Prediction Mode", [
@@ -1138,4 +840,299 @@ def show_dashboard():
                     st.plotly_chart(fig, use_container_width=True)
 
                     st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
-                    
+
+    with tab2:
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.subheader("📂 Dataset Overview")
+
+            num_rows = st.slider("Select number of rows to view", min_value=5, max_value=100, value=10)
+
+            columns_to_view = st.multiselect(
+                "Select columns to display",
+                options=df_eda.columns.tolist(),
+                default=df_eda.columns.tolist()[:5]  
+            )
+
+            st.dataframe(df_eda[columns_to_view].head(num_rows), height=400)
+
+            with st.expander("📊 Summary Statistics", expanded=False):
+                st.write(df_eda.describe().T.style.format("{:.2f}"))
+
+        with col2:
+            st.subheader("🔥 Correlation Heatmap")
+            df_filtered = df_eda.select_dtypes(include=np.number)
+            correlation_matrix = df_filtered.corr()
+        
+            fig_corr = px.imshow(
+                correlation_matrix,
+                text_auto=".2f",        
+                color_continuous_scale="RdBu_r",  
+                title=" ",
+                aspect="auto"
+            )
+
+            fig_corr.update_layout(
+                title_x=0.5,
+                height=590,
+                margin=dict(t=10, b=10)
+            )
+
+            # Display in Streamlit
+            st.plotly_chart(fig_corr, use_container_width=True)
+
+            with st.expander("📘 Correlation Analysis Summary", expanded=False):
+                st.markdown("""
+                <ul>
+                <li>The analysis shows that most parameters have low negative correlations, while a few show strong relationships.</li>
+                <li><strong>Water Temperatures</strong> strongly correlate with <strong>Air Temperature</strong>, indicating the impact of atmospheric conditions, especially on surface waters.</li>
+                <li><strong>Ammonia</strong> and <strong>Phosphate</strong> levels rise together, likely due to pollution or biological processes.</li>
+                <li><strong>pH</strong>, <strong>Dissolved Oxygen</strong>, <strong>Phosphate</strong>, and <strong>CO₂</strong> show declining trends over time, possibly linked to acidification, warming, or reduced biological activity.</li>
+                <li>Moderate correlations also exist between:
+                    <ul>
+                    <li><strong>pH</strong> & <strong>Dissolved Oxygen</strong></li>
+                    <li><strong>Sulfide</strong> & <strong>Ammonia</strong></li>
+                    <li><strong>CO₂</strong> & <strong>Water Temperatures</strong> / <strong>Dissolved Oxygen</strong></li>
+                    </ul>
+                </li>
+                </ul>
+                """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Parameter Distributions</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        site_options = ["All Sites"] + sorted(df_eda['Site'].unique())
+        selected_site = st.selectbox("Select Site", site_options, key="site_hist_all")
+
+        df_filtered = df_eda.copy()
+        if selected_site != "All Sites":
+            df_filtered = df_filtered[df_filtered['Site'] == selected_site]
+
+        # Select numeric columns
+        numeric_columns = df_filtered.select_dtypes(include=['float64', 'int64']).columns.tolist()
+
+        # Plot histograms in a 4x3 layout
+        rows = 3
+        cols = 4
+        for i in range(rows):
+            col_group = st.columns(cols)
+            for j in range(cols):
+                idx = i * cols + j
+                if idx < len(numeric_columns):
+                    with col_group[j]:
+                        param = numeric_columns[idx]
+                        fig = px.histogram(
+                            df_filtered,
+                            x=param,
+                            nbins=40,
+                            title=param,
+                            color_discrete_sequence=[dark_colors[idx % len(dark_colors)]],
+                            opacity=0.75
+                        )
+                        fig.update_layout(
+                            margin=dict(t=30, b=30),
+                            height=300,
+                            bargap=0.1
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Parameter Box Plots</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        sites = ["All Sites"] + sorted(df_eda['Site'].dropna().unique())
+        selected_site = st.selectbox("Select Site", sites, key="site_box_all")
+
+        df_filtered = df_eda if selected_site == "All Sites" else df_eda[df_eda['Site'] == selected_site]
+        numeric_columns = df_filtered.select_dtypes(include=['float64', 'int64']).columns.tolist()
+
+        rows, cols = 3, 4
+        for i in range(rows):
+            col_group = st.columns(cols)
+            for j in range(cols):
+                idx = i * cols + j
+                if idx >= len(numeric_columns):
+                    break
+                param = numeric_columns[idx]
+
+                fig = px.box(
+                    df_filtered,
+                    y=param,
+                    title=param,
+                    points="outliers",
+                    color_discrete_sequence=[dark_colors[idx % len(dark_colors)]]
+                )
+                fig.update_layout(
+                    yaxis_title=param,
+                    title_x=0.5,
+                    height=350,
+                    margin=dict(t=20, b=20)
+                )
+                col_group[j].plotly_chart(fig, use_container_width=True)
+
+        s1, s2 = st.columns(2)
+        with s1:
+            st.markdown("""
+                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0;">Water Quality Index Over Time</h3>
+                </div>
+            """, unsafe_allow_html=True)
+
+            wqi = pd.read_csv("wqi.csv")
+            wqi['Date'] = pd.to_datetime(wqi['Date'])
+
+            avg_wqi = wqi.groupby('Date', as_index=False)['WQI'].mean()
+            avg_wqi['Site'] = 'All Sites'
+
+            combined_wqi = pd.concat([avg_wqi, wqi], ignore_index=True)
+
+            fig_wqi_line = px.line(
+                combined_wqi,
+                x='Date',
+                y='WQI',
+                color='Site',
+                line_shape="spline",
+                title=" "
+            )
+
+            for i, trace in enumerate(fig_wqi_line.data):
+                trace.line.color = dark_colors[i % len(dark_colors)]
+                if trace.name != "All Sites":
+                    trace.visible = 'legendonly'
+
+            fig_wqi_line.update_layout(
+                margin=dict(t=20, b=20),
+                xaxis_title="Date",
+                yaxis_title="WQI",
+                title_x=0.5,
+                height=600,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=1, label="1m", step="month", stepmode="backward"),
+                            dict(count=6, label="6m", step="month", stepmode="backward"),
+                            dict(count=1, label="1y", step="year", stepmode="backward"),
+                            dict(step="all")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date"
+                )
+            )
+
+            st.plotly_chart(fig_wqi_line, use_container_width=True, key="wqi")
+
+
+        with s2:
+            st.markdown("""
+                <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; justify-content: center; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0;">Scatter Plots for Parameter Relationships</h3>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # Select columns for X and Y
+            numeric_columns = df_new.select_dtypes(include=['float64', 'int64']).columns.tolist()
+            categorical_columns = ['Weather Condition', 'Wind Direction']
+            x, y = st.columns(2)
+
+            with x:
+                x_axis = st.selectbox(
+                    "Select X-axis parameter",
+                    categorical_columns + numeric_columns,
+                    index=(categorical_columns + numeric_columns).index("pH") 
+                )
+
+            with y:
+                y_axis = st.selectbox(
+                    "Select Y-axis parameter",
+                    numeric_columns,
+                    index=numeric_columns.index("Dissolved Oxygen")  
+            )
+    
+            fig_scatter = px.strip(
+                    df_new,
+                    x=x_axis,
+                    y=y_axis,
+
+                    title=" ",
+                )
+
+            fig_scatter.update_layout(
+                xaxis_title=x_axis,
+                yaxis_title=y_axis,
+                title_x=0.5,
+                height=500,
+                margin=dict(t=30, b=30),
+                showlegend=False 
+            )
+
+            st.plotly_chart(fig_scatter, use_container_width=True)
+
+        st.markdown("""
+            <div style="background-color: green; color: white; padding: 0; margin-bottom: 10px; ustify-content: center; border-radius: 8px; text-align: center;">
+                <h3 style="margin: 0;">Line Charts for Time-Series Data</h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        df_plot = df_eda.copy()
+        df_plot['Date'] = pd.to_datetime(df_plot['Date'])
+        df_plot = df_plot.sort_values('Date')
+
+        site_options = ["All Sites"] + sorted(df_plot["Site"].unique())
+        selected_site = st.selectbox("Select Site to View", site_options, key="time-select")
+
+        if selected_site != "All Sites":
+            df_plot = df_plot[df_plot["Site"] == selected_site]
+
+        numeric_columns = df_plot.select_dtypes(include=np.number).columns.tolist()
+
+        df_long = df_plot.melt(
+            id_vars=["Date"],
+            value_vars=numeric_columns,
+            var_name="Parameter",
+            value_name="Value"
+        )
+
+        fig_line_all = px.line(
+            df_long,
+            x="Date",
+            y="Value",
+            color="Parameter",
+            title=f" ",
+            line_shape="spline"
+        )
+
+        for i, trace in enumerate(fig_line_all.data):
+            trace.visible = True if trace.name == "pH" else "legendonly"
+            trace.line.color = dark_colors[i % len(dark_colors)]
+
+        # Layout and range controls
+        fig_line_all.update_layout(
+            margin=dict(t=20, b=20),
+            xaxis_title="Date",
+            yaxis_title="Value",
+            title_x=0.5,
+            height=550,
+            xaxis=dict(
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all")
+                    ])
+                ),
+                rangeslider=dict(visible=True),
+                type="date"
+            )
+        )
+
+        st.plotly_chart(fig_line_all, use_container_width=True, key="line_charts")
+
+        st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
