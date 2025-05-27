@@ -27,7 +27,7 @@
 
 ![WQI Over Time + Scatter Plot for Parameters](https://github.com/pjpangilinan/MC02-CPEN106/blob/main/docs/EDA%20P.2.png)
 
-![Time-Series Chart](https://github.com/pjpangilinan/MC02-CPEN106/blob/main/docs/EDA%20P.2.png)
+![Time-Series Chart](https://github.com/pjpangilinan/MC02-CPEN106/blob/main/docs/EDA%20P.3.png)
 
 ---
 
