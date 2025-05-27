@@ -1,6 +1,8 @@
 
 ## BSCPE 3-2 Group 1: Data Mining and Data Visualization for Water Quality Prediction in Taal Lake Dashboard
 
+See [Technical Report](https://github.com/pjpangilinan/MC02-CPEN106/blob/main/Group1_TechnicalReport_Data-Mining-and-Data-Visualization-for-Water-Quality-Prediction-in-Taal-Lake.pdf) for full documentation.
+
 ### Home
 
 ![Screenshot of the Dashboard's Homepage](https://github.com/pjpangilinan/MC02-CPEN106/blob/main/docs/home.png)
