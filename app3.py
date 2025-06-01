@@ -19,7 +19,7 @@ styles = {
     },
     "img": {
         "height": "4.5rem",
-        "padding-right": "50%",
+        "padding-right": "50vw",
     },
     "span": {
         "color": "white",
