@@ -19,7 +19,7 @@ styles = {
     },
     "img": {
         "height": "4.5rem",
-        "padding-right": "50vw",
+        "padding-right": "clamp(1rem, 5vw, 3rem)",
     },
     "span": {
         "color": "white",
